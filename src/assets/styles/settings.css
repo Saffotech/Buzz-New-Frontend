@@ -1,0 +1,1521 @@
+/* ========================================
+   Settings Component Styles
+   src/components/settings/styles/settings.css
+   ======================================== */
+
+/* Base Settings Hub Styles */
+.settings-hub {
+  min-height: 100vh;
+  background: #f8fafc;
+  position: relative;
+}
+
+/* Page Header */
+.page-header {
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 1rem 0;
+}
+
+.header-content {
+  max-width: 1200px;
+  /* margin: 0 auto; */
+  padding: 0 1.5rem;
+}
+
+.page-header h1 {
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 0.5rem 0;
+}
+
+.page-header p {
+  color: #64748b;
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* Settings Navigation */
+.settings-hub-nav {
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.tabs {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  display: flex;
+  gap: 0;
+}
+
+.nav-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  border: none;
+  background: none;
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.nav-tab:hover {
+  color: #3b82f6;
+  background: #f1f5f9;
+}
+
+.nav-tab.active {
+  color: #3b82f6;
+  border-bottom-color: #3b82f6;
+  background: #f8fafc;
+}
+
+/* Main Content Area */
+.settings-hub-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.settings-subpage {
+  width: 100%;
+}
+
+.settings-content {
+  max-width: 800px;
+}
+
+.settings-header {
+  margin-bottom: 2rem;
+}
+
+.settings-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.5rem 0;
+}
+
+.settings-header p {
+  color: #64748b;
+  margin: 0;
+}
+
+/* here new code */
+.content-card {
+  background: #fff;
+  padding: 16px;
+  border-radius: 8px;
+  /* box-shadow: 0 2px 6px rgba(0,0,0,0.1); */
+}
+
+.form-row {
+  /* display: flex; */
+  gap: 20px; /* space between Name & Email */
+}
+
+.form-group {
+  flex: 1; /* both inputs take equal width */
+  display: flex;
+  flex-direction: column;
+}
+
+.readonly-input {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #f9f9f9;
+}
+
+/* 👇 Responsive: stack vertically on small screens */
+@media (max-width: 768px) {
+  .form-row {
+    flex-direction: column;
+    gap: 8px; /* 👈 smaller gap for mobile */
+  }
+}
+
+.form-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0; /* remove extra spacing if any */
+}
+
+.form-group label {
+  margin-bottom: 4px; /* tighten label-input spacing */
+}
+
+/* Settings Card Component */
+.settings-card {
+  background: white;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+}
+
+/* keep side + top padding, remove only bottom */
+.settings-card:last-child .card-content {
+  padding: 0.5rem 1.5rem 0 1.5rem; /* top | right | bottom | left */
+  border-bottom: none; /* in case some extra line appears */
+}
+
+/* remove the header divider for last card */
+.settings-card:last-child .card-header {
+  border-bottom: none;
+}
+
+.card-header {
+  padding: 1.5rem;
+  /* border-bottom: 1px solid #e2e8f0; */
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.card-header-content h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.25rem 0;
+}
+
+.card-header-content p {
+  color: #64748b;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.card-header-action {
+  flex-shrink: 0;
+}
+
+.card-content {
+  padding: 1.5em;
+}
+
+/* Buttons */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: white;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.new {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.btn-secondary-draft {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  /* background: #9ca3af; */
+  color: #374151;
+  border: 2px solid #6b7280;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-danger-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: white;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-danger-outline:hover {
+  background: #fef2f2;
+  border-color: #dc2626;
+}
+
+/* Workspace Settings */
+.workspace-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.workspace-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.edit-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.workspace-input {
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  width: 100%;
+  max-width: 400px;
+}
+
+.workspace-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgb(59 130 246 / 0.1);
+}
+
+.edit-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+/* Account Settings */
+.accounts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.account-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  background: #f8fafc;
+}
+
+.account-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.account-avatar {
+  position: relative;
+  width: 48px;
+  height: 48px;
+}
+
+.account-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.platform-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+}
+
+.platform-badge.instagram {
+  background: linear-gradient(
+    45deg,
+    #f09433 0%,
+    #e6683c 25%,
+    #dc2743 50%,
+    #cc2366 75%,
+    #bc1888 100%
+  );
+  color: white;
+}
+
+.platform-badge.twitter {
+  background: #1da1f2;
+  color: white;
+}
+
+.platform-badge.facebook {
+  background: #1877f2;
+  color: white;
+}
+
+.platform-badge.linkedin {
+  background: #0077b5;
+  color: white;
+}
+
+.platform-badge.youtube {
+  background: #ff0000;
+  color: white;
+}
+
+.account-details h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.25rem 0;
+}
+
+.platform-name {
+  font-size: 0.875rem;
+  color: #64748b;
+  /* margin: 0 0 0.25rem 0; */
+}
+
+.followers-count {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.account-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.connection-status.connected {
+  background: #dcfce7;
+  color: #166534;
+}
+
+/* Member Settings */
+.members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.member-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  background: #f8fafc;
+}
+
+.member-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.member-avatar {
+  width: 48px;
+  height: 48px;
+}
+
+.member-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.member-details h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.25rem 0;
+}
+
+.member-email {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0 0 0.25rem 0;
+}
+
+.join-date {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.member-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.role-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.role-badge.owner {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.role-badge.admin {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.role-badge.member {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #6b7280;
+}
+
+.empty-state svg {
+  /* margin: 0 auto 1rem; */
+  color: #d1d5db;
+}
+
+.empty-state h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 0.5rem 0;
+}
+
+.empty-state p {
+  margin: 0 0 1.5rem 0;
+}
+
+/* Coming Soon Card */
+.coming-soon-card {
+  text-align: center;
+  padding: 3rem 2rem;
+}
+
+.coming-soon-card svg {
+  color: #d1d5db;
+}
+
+.coming-soon-card h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 1rem 0;
+}
+
+.coming-soon-card p {
+  color: #64748b;
+  margin: 0 0 2rem 0;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.coming-soon-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.contact-info {
+  padding-top: 2rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.contact-info p {
+  margin: 0 0 0.5rem 0;
+  color: #6b7280;
+}
+
+.contact-link {
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.contact-link:hover {
+  text-decoration: underline;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed; /* not absolute! */
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5); /* or whatever dim you prefer */
+  z-index: 5000000; /* must be higher than sidebar */
+}
+.modal-overlay {
+  backdrop-filter: blur(3px);
+}
+
+.modal {
+  background: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-small {
+  max-width: 400px;
+}
+.modal-medium {
+  max-width: 500px;
+}
+.modal-large {
+  max-width: 700px;
+}
+
+.modal-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+  color: #374151;
+  background: #f3f4f6;
+}
+
+.modal-content {
+  padding: 1.5rem;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.modal-actions {
+  padding: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+/* Form Styles */
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgb(59 130 246 / 0.1);
+}
+
+/* Notification Styles */
+.notification {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  z-index: 100;
+  border-left: 4px solid;
+  max-width: 400px;
+  animation: slideIn 0.3s ease-out;
+}
+
+.notification.success {
+  border-left-color: #10b981;
+  color: #065f46;
+}
+
+.notification.error {
+  border-left-color: #ef4444;
+  color: #991b1b;
+}
+
+.notification.warning {
+  border-left-color: #f59e0b;
+  color: #92400e;
+}
+
+.notification.info {
+  border-left-color: #3b82f6;
+  color: #1e40af;
+}
+
+.notification-close {
+  background: none;
+  border: none;
+  color: currentColor;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  margin-left: auto;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.notification-close:hover {
+  opacity: 1;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .page-header {
+    padding: 1.5rem 0;
+  }
+
+  .header-content {
+    padding: 0 1rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .tabs {
+    padding: 0 1rem;
+    overflow-x: auto;
+  }
+
+  .nav-tab {
+    padding: 1rem;
+    min-width: fit-content;
+  }
+
+  .settings-hub-main {
+    padding: 1.5rem 1rem;
+  }
+
+  .card-header {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .account-item,
+  .member-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .account-actions,
+  .member-actions {
+    justify-content: space-between;
+  }
+
+  .coming-soon-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .modal {
+    margin: 1rem;
+    max-height: calc(100vh - 2rem);
+  }
+
+  .notification {
+    left: 1rem;
+    right: 1rem;
+    max-width: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .edit-actions {
+    flex-direction: column;
+  }
+
+  .workspace-display {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+}
+
+.password-verify-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.verify-btn {
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  padding: 1rem 1.3rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.verification-success {
+  color: #28a745;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.readonly-input {
+  background-color: #f8f9fa;
+  cursor: not-allowed;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  margin-bottom: 1rem;
+}
+
+.connection-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-connected {
+  background-color: #10b981 !important;
+  border-color: #10b981 !important;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.btn-secondary {
+  background-color: transparent;
+  border: 2px solid #6b7280;
+  color: #6b7280;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background-color: #f9fafb;
+  border-color: #4b5563;
+  color: #4b5563;
+}
+
+.platform-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+}
+
+.platform-badge.instagram {
+  background: linear-gradient(
+    45deg,
+    #f09433 0%,
+    #e6683c 25%,
+    #dc2743 50%,
+    #cc2366 75%,
+    #bc1888 100%
+  );
+}
+
+.platform-badge.facebook {
+  background-color: #1877f2;
+}
+
+.platform-badge.twitter {
+  background-color: #1da1f2;
+}
+
+.accounts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.account-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background-color: #ffffff;
+}
+
+.account-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.account-avatar {
+  position: relative;
+  width: 48px;
+  height: 48px;
+}
+
+.account-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* AccountsSettings.css */
+
+.accounts-container {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 2rem;
+}
+
+.account-group {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  background: #fafafa;
+}
+
+.account-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.account-group-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0;
+}
+
+.account-count {
+  background: #e5e7eb;
+  color: #6b7280;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Main Grid Layout - This is the key part! */
+.accounts-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  width: 100%;
+}
+
+/* Responsive breakpoints */
+@media (max-width: 1024px) {
+  .accounts-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .accounts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.account-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.25rem;
+  transition: all 0.2s ease;
+  position: relative;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+}
+
+.account-card:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.account-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.account-avatar {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.platform-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+}
+
+.platform-instagram {
+  background: linear-gradient(
+    45deg,
+    #f09433 0%,
+    #e6683c 25%,
+    #dc2743 50%,
+    #cc2366 75%,
+    #bc1888 100%
+  );
+  color: white;
+}
+
+.platform-facebook {
+  background: #1877f2;
+  color: white;
+}
+
+.platform-twitter {
+  background: #1da1f2;
+  color: white;
+}
+
+.platform-linkedin {
+  background: #0077b5;
+  color: white;
+}
+
+.platform-youtube {
+  background: #ff0000;
+  color: white;
+}
+
+.account-delete-btn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  padding: 0.375rem;
+  border-radius: 6px;
+  transition: all 0.2s;
+  opacity: 0.7;
+}
+
+.account-delete-btn:hover {
+  background: #fee2e2;
+  opacity: 1;
+}
+
+.account-card-content {
+  text-align: left;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.account-username {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.25rem 0;
+  word-break: break-word;
+  line-height: 1.3;
+}
+
+.platform-name {
+  font-size: 0.875rem;
+  color: #6b7280;
+  /* margin: 0 0 0.5rem 0; */
+}
+
+.followers-count {
+  font-size: 0.875rem;
+  color: #374151;
+  display: block;
+  margin-bottom: auto;
+  padding-bottom: 0.75rem;
+}
+
+.connection-connected {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  background: #dcfce7;
+  color: #166534;
+  padding: 0.375rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  align-self: flex-start;
+  margin-top: auto;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #6b7280;
+}
+
+.empty-state svg {
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.loading-state {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+}
+
+.connection-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Additional utility classes for better spacing */
+.account-group + .account-group {
+  margin-top: 1.5rem;
+}
+
+/* Ensure cards have equal height in each row */
+.accounts-grid .account-card {
+  height: auto;
+  min-height: 220px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 640px) {
+  .modal-content {
+    margin: 16px !important;
+    width: calc(100% - 32px) !important;
+    max-width: none !important;
+  }
+
+  /* Stack buttons vertically on mobile */
+  .modal-content div:last-child {
+    flex-direction: column !important;
+    /* gap: 0.75rem; */
+  }
+}
+
+/* Container fixes */
+.settings-subpage {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.settings-content {
+  width: 100%;
+  max-width: 100%;
+  /* padding: 0 20px; */
+  box-sizing: border-box;
+}
+
+/* Settings card container */
+.settings-card {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Accounts container - prevent overflow */
+.accounts-container {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.account-group {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Fixed grid that respects container boundaries */
+.accounts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Account cards - prevent overflow */
+.account-card {
+  width: 100%; /* Allow cards to shrink */
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Account group header */
+.account-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 0 4px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.account-group-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+  color: #1f2937;
+  flex: 1;
+}
+
+.account-count {
+  background: #f3f4f6;
+  color: #6b7280;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Responsive grid adjustments */
+@media (min-width: 768px) {
+  .accounts-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .accounts-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1200px) {
+  .accounts-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (min-width: 1440px) {
+  .accounts-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+/* Mobile responsive - stack cards */
+@media (max-width: 767px) {
+  .settings-content {
+    /* padding: 0 16px; */
+  }
+
+  .accounts-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .account-group-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .account-count {
+    align-self: flex-end;
+  }
+}
+
+/* Ensure no horizontal scrolling */
+body,
+html {
+  overflow-x: hidden;
+}
+
+/* If you have a main container wrapper */
+.main-container,
+.app-container {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Add this to your CSS */
+.connection-badge {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: normal;
+}
+
+/* If you have platform-specific styling */
+.platform-instagram.direct {
+  background-color: #fdf2f8;
+  border-color: #fce7f3;
+}
+
+.account-card.instagram-only {
+  border-color: rgba(219, 39, 119, 0.3);
+}
+
+.account-card.full-access {
+  border-color: rgba(37, 99, 235, 0.3);
+}
+
+.account-card.view-only {
+  opacity: 0.85;
+  border-style: dashed;
+  border-color: rgba(100, 116, 139, 0.5);
+}
+
+.connection-badge.instagram-only {
+  color: #db2777;
+}
+
+.connection-badge.full-access {
+  color: #2563eb;
+}
+
+.connection-badge.view-only {
+  color: #64748b;
+}
+
+.connection-status.view-only {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+.avatar-fallback {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: hsl(241, 90%, 49%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.view-toggle {
+  display: flex; /* border: 2px solid rgb(59, 130, 246); */
+  overflow: hidden;
+  width: fit-content;
+  background-color: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.view-togglex {
+  display: flex; 
+  border: 1px solid rgb(59, 130, 246);
+  overflow: hidden;
+  width: fit-content;
+  background: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+.toggle-btn {
+  /* flex: 1; */
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  color: rgb(59, 130, 246);
+  background: transparent;
+  transition: all 0.3s ease;
+}
+
+.toggle-btn.active {
+  background-color: rgb(59, 130, 246);
+  color: #fff;
+  font-weight: 600;
+}
