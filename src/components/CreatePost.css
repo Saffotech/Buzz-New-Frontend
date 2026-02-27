@@ -1605,32 +1605,6 @@
   }
 }
 
-/* Quick link to Scheduler at top of form */
-.scheduler-quick-link-wrap {
-  margin-bottom: 1rem;
-}
-
-.scheduler-quick-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: #eff6ff;
-  border: 2px solid #3b82f6;
-  border-radius: 10px;
-  color: #1d4ed8;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.scheduler-quick-link:hover {
-  background: #dbeafe;
-  border-color: #2563eb;
-  color: #1e40af;
-}
-
 /* Scheduler - New Design */
 .scheduler-section {
   margin-top: 1rem;
@@ -1725,6 +1699,12 @@
 .schedule-type-option.active {
   border-color: #3b82f6;
   background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+}
+
+.schedule-type-option.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .schedule-type-option input[type="radio"] {
