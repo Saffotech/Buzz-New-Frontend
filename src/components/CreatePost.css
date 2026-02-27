@@ -1605,6 +1605,32 @@
   }
 }
 
+/* Quick link to Scheduler at top of form */
+.scheduler-quick-link-wrap {
+  margin-bottom: 1rem;
+}
+
+.scheduler-quick-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #eff6ff;
+  border: 2px solid #3b82f6;
+  border-radius: 10px;
+  color: #1d4ed8;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.scheduler-quick-link:hover {
+  background: #dbeafe;
+  border-color: #2563eb;
+  color: #1e40af;
+}
+
 /* Scheduler - New Design */
 .scheduler-section {
   margin-top: 1rem;
@@ -1805,6 +1831,61 @@
   gap: 1rem;
 }
 
+.schedule-dates-row.schedule-dates-row-single {
+  grid-template-columns: 1fr;
+}
+
+.daily-start-date-text {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.two-per-week-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.two-per-week-section .schedule-date-group {
+  max-width: 100%;
+}
+
+.weekday-buttons-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.weekday-btn {
+  padding: 0.5rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  background: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.weekday-btn:hover:not(:disabled) {
+  border-color: #3b82f6;
+  background: #f8fafc;
+}
+
+.weekday-btn.active {
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+  color: #1d4ed8;
+}
+
+.weekday-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .schedule-date-group {
   display: flex;
   flex-direction: column;
@@ -1849,6 +1930,24 @@
 .preferred-time-select:focus {
   outline: none;
   border-color: #3b82f6;
+}
+
+.custom-time-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.custom-time-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.custom-time-select {
+  padding: 0.5rem 0.75rem;
+  min-width: 0;
 }
 
 /* Scheduler Radio Buttons - Larger Text Sizes (legacy) */

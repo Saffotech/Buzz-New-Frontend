@@ -90,10 +90,14 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   const [activeTab, setActiveTab] = useState('compose');
   const [isScheduled, setIsScheduled] = useState(false);
   const [scheduleType, setScheduleType] = useState('auto'); // 'manual' | 'auto'
-  const [postingFrequency, setPostingFrequency] = useState('daily'); // 'daily' | 'weekly' | '2perweek' | 'weekend'
+  const [postingFrequency, setPostingFrequency] = useState(''); // 'daily' | 'weekly' | '2perweek' | 'weekend' - empty until user picks
   const [scheduleStartDate, setScheduleStartDate] = useState('');
   const [scheduleEndDate, setScheduleEndDate] = useState('');
-  const [preferredTime, setPreferredTime] = useState('optimal'); // 'optimal' or specific time
+  const [selectedDays2PerWeek, setSelectedDays2PerWeek] = useState([]); // max 2: getDay() values 0=Sun,1=Mon,...,6=Sat
+  const [preferredTime, setPreferredTime] = useState('09:00'); // 'custom' or preset time string (e.g. '09:00')
+  const [customTimeHours, setCustomTimeHours] = useState(9);
+  const [customTimeMinutes, setCustomTimeMinutes] = useState(0);
+  const [customTimeSeconds, setCustomTimeSeconds] = useState(0);
   const [previewMode, setPreviewMode] = useState(false);
   const [showAISuggestions, setShowAISuggestions] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
@@ -554,10 +558,12 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   // Set initial time when scheduling is enabled
   useEffect(() => {
     if (isScheduled && !postData.scheduledTime) {
-      const time = scheduleType === 'auto' && preferredTime === 'optimal' ? '09:00' : initialFiveMinAhead;
+      const time = preferredTime === 'custom'
+        ? `${String(customTimeHours).padStart(2, '0')}:${String(customTimeMinutes).padStart(2, '0')}:${String(customTimeSeconds).padStart(2, '0')}`
+        : (preferredTime || initialFiveMinAhead);
       setPostData(prev => ({ ...prev, scheduledTime: time }));
     }
-  }, [isScheduled, postData.scheduledTime, initialFiveMinAhead, scheduleType, preferredTime]);
+  }, [isScheduled, postData.scheduledTime, initialFiveMinAhead, scheduleType, preferredTime, customTimeHours, customTimeMinutes, customTimeSeconds]);
 
 
   // Memoized conversion — ✅ re-runs when scheduledTime changes
@@ -2210,10 +2216,14 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     });
     setIsScheduled(false);
     setScheduleType('auto');
-    setPostingFrequency('daily');
+    setPostingFrequency('');
     setScheduleStartDate('');
     setScheduleEndDate('');
-    setPreferredTime('optimal');
+    setSelectedDays2PerWeek([]);
+    setPreferredTime('09:00');
+    setCustomTimeHours(9);
+    setCustomTimeMinutes(0);
+    setCustomTimeSeconds(0);
     setPreviewMode(false);
     setShowAISuggestions(false);
     setAiSuggestions([]);
@@ -3361,6 +3371,33 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
               {/* Main Form Column - ALWAYS visible */}
               <div className="form-column">
+                {/* Quick link to Scheduler - so users can find Schedule for Later / 2 per Week */}
+                <div className="scheduler-quick-link-wrap">
+                  <button
+                    type="button"
+                    className="scheduler-quick-link"
+                    onClick={() => {
+                      setIsScheduled(true);
+                      const defaultDate = new Date();
+                      const dateStr = defaultDate.toISOString().split("T")[0];
+                      if (!scheduleStartDate) setScheduleStartDate(dateStr);
+                      if (!postData.scheduledDate) {
+                        const fiveMinAhead = new Date();
+                        fiveMinAhead.setMinutes(fiveMinAhead.getMinutes() + 5);
+                        const timeStr = `${fiveMinAhead.getHours().toString().padStart(2, '0')}:${fiveMinAhead.getMinutes().toString().padStart(2, '0')}`;
+                        setPostData(prev => ({ ...prev, scheduledDate: dateStr, scheduledTime: preferredTime === 'custom' ? `${String(customTimeHours).padStart(2, '0')}:${String(customTimeMinutes).padStart(2, '0')}:${String(customTimeSeconds).padStart(2, '0')}` : timeStr }));
+                      }
+                      setTimeout(() => {
+                        const el = document.getElementById('scheduler-section');
+                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }, 100);
+                    }}
+                  >
+                    <Clock size={16} />
+                    Schedule for later (Daily / Weekly / 2 per Week)
+                  </button>
+                </div>
+
                 {/* Platform Selection */}
                 <div className="form-section">
                   <div className="section-label-container">
@@ -3930,8 +3967,8 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                   )}
                 </div>
 
-                {/* Scheduler Section */}
-                <div className="form-section scheduler-section">
+                {/* Scheduler Section - scroll here to see Schedule for Later / 2 per Week */}
+                <div id="scheduler-section" className="form-section scheduler-section">
                   <label className="section-label">
                     <Clock size={16} />
                     Scheduler
@@ -3964,7 +4001,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                           setPostData(prev => ({
                             ...prev,
                             scheduledDate: dateStr,
-                            scheduledTime: scheduleType === 'auto' && preferredTime === 'optimal' ? '09:00' : timeStr
+                            scheduledTime: scheduleType === 'auto' && preferredTime === 'custom' ? `${String(customTimeHours).padStart(2, '0')}:${String(customTimeMinutes).padStart(2, '0')}:${String(customTimeSeconds).padStart(2, '0')}` : timeStr
                           }));
                         }
                         if (!scheduleStartDate) setScheduleStartDate(dateStr);
@@ -4001,7 +4038,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                                   fiveMin.setMinutes(fiveMin.getMinutes() + 5);
                                   setPostData(prev => ({
                                     ...prev,
-                                    scheduledTime: preferredTime === 'optimal' ? '09:00' : (prev.scheduledTime || `${fiveMin.getHours().toString().padStart(2, '0')}:${fiveMin.getMinutes().toString().padStart(2, '0')}`)
+                                    scheduledTime: preferredTime === 'custom' ? `${String(customTimeHours).padStart(2, '0')}:${String(customTimeMinutes).padStart(2, '0')}:${String(customTimeSeconds).padStart(2, '0')}` : (prev.scheduledTime || `${fiveMin.getHours().toString().padStart(2, '0')}:${fiveMin.getMinutes().toString().padStart(2, '0')}`)
                                   }));
                                 }
                               }}
@@ -4023,7 +4060,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                               checked={scheduleType === 'auto'}
                               onChange={() => {
                                 setScheduleType('auto');
-                                setPostData(prev => ({ ...prev, scheduledTime: preferredTime === 'optimal' ? '09:00' : preferredTime }));
+                                setPostData(prev => ({ ...prev, scheduledTime: preferredTime === 'custom' ? `${String(customTimeHours).padStart(2, '0')}:${String(customTimeMinutes).padStart(2, '0')}:${String(customTimeSeconds).padStart(2, '0')}` : preferredTime }));
                               }}
                             />
                             <span className="schedule-type-radio"></span>
@@ -4053,7 +4090,15 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                                 key={opt.id}
                                 type="button"
                                 className={`posting-frequency-card ${postingFrequency === opt.id ? 'active' : ''}`}
-                                onClick={() => setPostingFrequency(opt.id)}
+                                onClick={() => {
+                                  setPostingFrequency(opt.id);
+                                  if (opt.id === '2perweek') {
+                                    setTimeout(() => {
+                                      const el = document.getElementById('two-per-week-section');
+                                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                    }, 150);
+                                  }
+                                }}
                               >
                                 <span className="freq-label">{opt.label}</span>
                                 <span className="freq-desc">{opt.desc}</span>
@@ -4063,8 +4108,10 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                         </div>
                       )}
 
-                      {/* Start Date & End Date - both shown for Manual and Auto */}
-                      <div className="schedule-dates-row">
+                      {/* Start Date & End Date - show for Manual, Daily, Weekly, Weekend. Not for 2perweek (has its own UI). */}
+                      {((scheduleType === 'manual') || (scheduleType === 'auto' && postingFrequency)) && postingFrequency !== '2perweek' && (
+                        <>
+                      <div className={`schedule-dates-row ${scheduleType === 'auto' && (postingFrequency === 'daily' || postingFrequency === 'weekly') ? 'schedule-dates-row-single' : ''}`}>
                         <div className="schedule-date-group">
                           <label className="schedule-sub-label">Start Date</label>
                           <input
@@ -4081,6 +4128,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                             required={isScheduled}
                           />
                         </div>
+                        {!(scheduleType === 'auto' && (postingFrequency === 'daily' || postingFrequency === 'weekly')) && (
                         <div className="schedule-date-group">
                           <label className="schedule-sub-label">End Date</label>
                           <input
@@ -4093,7 +4141,107 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                             required={isScheduled}
                           />
                         </div>
+                        )}
                       </div>
+
+                      {scheduleType === 'auto' && postingFrequency === 'daily' && scheduleStartDate && (
+                        <p className="daily-start-date-text">
+                          Starting Date is {new Date(scheduleStartDate + 'T12:00:00').toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} and will post daily until content count finish.
+                        </p>
+                      )}
+
+                      {scheduleType === 'auto' && postingFrequency === 'weekly' && scheduleStartDate && (() => {
+                        const selectedDate = new Date(scheduleStartDate + 'T12:00:00');
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        selectedDate.setHours(0, 0, 0, 0);
+                        // If selected date is today or in the past, show next week's same day; otherwise show selected date
+                        const nextPostDate = selectedDate <= today
+                          ? new Date(selectedDate.getTime() + 7 * 24 * 60 * 60 * 1000)
+                          : selectedDate;
+                        const dateStr = nextPostDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                        const dayStr = nextPostDate.toLocaleDateString('en-US', { weekday: 'long' });
+                        return (
+                          <p className="daily-start-date-text weekly-next-post-text">
+                            Next Post is schedule on {dateStr} ({dayStr})
+                          </p>
+                        );
+                      })()}
+
+                      {/* 2 per Week: Start Date + select 2 days (Mon–Sun); no End Date. Next post = first of those days from start date. */}
+                      {scheduleType === 'auto' && postingFrequency === '2perweek' && (
+                        <div id="two-per-week-section" className="two-per-week-section">
+                          <div className="schedule-date-group">
+                            <label className="schedule-sub-label">Start Date</label>
+                            <input
+                              type="date"
+                              value={scheduleStartDate}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setScheduleStartDate(val);
+                                setPostData(prev => ({ ...prev, scheduledDate: val }));
+                              }}
+                              className="form-input schedule-date-input"
+                              min={new Date().toISOString().split("T")[0]}
+                              placeholder="Pick date"
+                              required={isScheduled}
+                            />
+                          </div>
+                          <label className="schedule-sub-label">Select 2 days (posts will go on these days each week)</label>
+                          <div className="weekday-buttons-row">
+                            {[
+                              { label: 'Mon', getDay: 1 },
+                              { label: 'Tue', getDay: 2 },
+                              { label: 'Wed', getDay: 3 },
+                              { label: 'Thu', getDay: 4 },
+                              { label: 'Fri', getDay: 5 },
+                              { label: 'Sat', getDay: 6 },
+                              { label: 'Sun', getDay: 0 }
+                            ].map(({ label, getDay }) => {
+                              const isSelected = selectedDays2PerWeek.includes(getDay);
+                              const disabled = selectedDays2PerWeek.length >= 2 && !isSelected;
+                              return (
+                                <button
+                                  key={getDay}
+                                  type="button"
+                                  className={`weekday-btn ${isSelected ? 'active' : ''}`}
+                                  disabled={disabled}
+                                  onClick={() => {
+                                    if (isSelected) {
+                                      setSelectedDays2PerWeek(prev => prev.filter(d => d !== getDay));
+                                    } else if (selectedDays2PerWeek.length < 2) {
+                                      setSelectedDays2PerWeek(prev => [...prev, getDay].sort((a, b) => a - b));
+                                    }
+                                  }}
+                                >
+                                  {label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          {scheduleStartDate && selectedDays2PerWeek.length === 2 && (() => {
+                            const start = new Date(scheduleStartDate + 'T12:00:00');
+                            start.setHours(0, 0, 0, 0);
+                            const [d1, d2] = selectedDays2PerWeek;
+                            let next = new Date(start);
+                            for (let i = 0; i <= 7; i++) {
+                              const d = new Date(start);
+                              d.setDate(d.getDate() + i);
+                              if (d.getDay() === d1 || d.getDay() === d2) {
+                                next = d;
+                                break;
+                              }
+                            }
+                            const dateStr = next.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                            const dayStr = next.toLocaleDateString('en-US', { weekday: 'long' });
+                            return (
+                              <p className="daily-start-date-text weekly-next-post-text">
+                                Next post on {dateStr} ({dayStr})
+                              </p>
+                            );
+                          })()}
+                        </div>
+                      )}
 
                       {/* Preferred Time - dropdown for both Manual and Auto */}
                       <div className="preferred-time-section">
@@ -4104,11 +4252,16 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                             onChange={(e) => {
                               const val = e.target.value;
                               setPreferredTime(val);
-                              setPostData(prev => ({ ...prev, scheduledTime: val === 'optimal' ? '09:00' : val }));
+                              if (val === 'custom') {
+                                const customStr = `${String(customTimeHours).padStart(2, '0')}:${String(customTimeMinutes).padStart(2, '0')}:${String(customTimeSeconds).padStart(2, '0')}`;
+                                setPostData(prev => ({ ...prev, scheduledTime: customStr }));
+                              } else {
+                                setPostData(prev => ({ ...prev, scheduledTime: val }));
+                              }
                             }}
                             className="form-input preferred-time-select"
                           >
-                            <option value="optimal">Optimal Time (AI suggested)</option>
+                            <option value="custom">Custom Time</option>
                             <option value="09:00">9:00 AM</option>
                             <option value="12:00">12:00 PM</option>
                             <option value="15:00">3:00 PM</option>
@@ -4117,7 +4270,61 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                           </select>
                           <ChevronDown size={18} className="preferred-time-chevron" />
                         </div>
+                        {preferredTime === 'custom' && (
+                          <div className="custom-time-row">
+                            <div className="custom-time-group">
+                              <label className="schedule-sub-label">Hours</label>
+                              <select
+                                value={customTimeHours}
+                                onChange={(e) => {
+                                  const h = parseInt(e.target.value, 10);
+                                  setCustomTimeHours(h);
+                                  setPostData(prev => ({ ...prev, scheduledTime: `${String(h).padStart(2, '0')}:${String(customTimeMinutes).padStart(2, '0')}:${String(customTimeSeconds).padStart(2, '0')}` }));
+                                }}
+                                className="form-input preferred-time-select custom-time-select"
+                              >
+                                {Array.from({ length: 24 }, (_, i) => (
+                                  <option key={i} value={i}>{String(i).padStart(2, '0')}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className="custom-time-group">
+                              <label className="schedule-sub-label">Minutes</label>
+                              <select
+                                value={customTimeMinutes}
+                                onChange={(e) => {
+                                  const m = parseInt(e.target.value, 10);
+                                  setCustomTimeMinutes(m);
+                                  setPostData(prev => ({ ...prev, scheduledTime: `${String(customTimeHours).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(customTimeSeconds).padStart(2, '0')}` }));
+                                }}
+                                className="form-input preferred-time-select custom-time-select"
+                              >
+                                {Array.from({ length: 60 }, (_, i) => (
+                                  <option key={i} value={i}>{String(i).padStart(2, '0')}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className="custom-time-group">
+                              <label className="schedule-sub-label">Seconds</label>
+                              <select
+                                value={customTimeSeconds}
+                                onChange={(e) => {
+                                  const s = parseInt(e.target.value, 10);
+                                  setCustomTimeSeconds(s);
+                                  setPostData(prev => ({ ...prev, scheduledTime: `${String(customTimeHours).padStart(2, '0')}:${String(customTimeMinutes).padStart(2, '0')}:${String(s).padStart(2, '0')}` }));
+                                }}
+                                className="form-input preferred-time-select custom-time-select"
+                              >
+                                {Array.from({ length: 60 }, (_, i) => (
+                                  <option key={i} value={i}>{String(i).padStart(2, '0')}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                        )}
                       </div>
+                        </>
+                      )}
 
                     </div>
                   )}
