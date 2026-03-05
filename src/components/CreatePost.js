@@ -89,7 +89,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
   const [activeTab, setActiveTab] = useState('compose');
   const [isScheduled, setIsScheduled] = useState(false);
-  const [scheduleType, setScheduleType] = useState('auto'); // 'manual' | 'auto'
+  const [scheduleType, setScheduleType] = useState('manual'); // 'manual' | 'auto' - auto is disabled
   const [postingFrequency, setPostingFrequency] = useState(''); // 'daily' | 'weekly' | '2perweek' | 'weekend' - empty until user picks
   const [scheduleStartDate, setScheduleStartDate] = useState('');
   const [scheduleEndDate, setScheduleEndDate] = useState('');
@@ -2215,7 +2215,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       }
     });
     setIsScheduled(false);
-    setScheduleType('auto');
+    setScheduleType('manual');
     setPostingFrequency('');
     setScheduleStartDate('');
     setScheduleEndDate('');
@@ -3371,33 +3371,6 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
               {/* Main Form Column - ALWAYS visible */}
               <div className="form-column">
-                {/* Quick link to Scheduler - so users can find Schedule for Later / 2 per Week */}
-                <div className="scheduler-quick-link-wrap">
-                  <button
-                    type="button"
-                    className="scheduler-quick-link"
-                    onClick={() => {
-                      setIsScheduled(true);
-                      const defaultDate = new Date();
-                      const dateStr = defaultDate.toISOString().split("T")[0];
-                      if (!scheduleStartDate) setScheduleStartDate(dateStr);
-                      if (!postData.scheduledDate) {
-                        const fiveMinAhead = new Date();
-                        fiveMinAhead.setMinutes(fiveMinAhead.getMinutes() + 5);
-                        const timeStr = `${fiveMinAhead.getHours().toString().padStart(2, '0')}:${fiveMinAhead.getMinutes().toString().padStart(2, '0')}`;
-                        setPostData(prev => ({ ...prev, scheduledDate: dateStr, scheduledTime: preferredTime === 'custom' ? `${String(customTimeHours).padStart(2, '0')}:${String(customTimeMinutes).padStart(2, '0')}:${String(customTimeSeconds).padStart(2, '0')}` : timeStr }));
-                      }
-                      setTimeout(() => {
-                        const el = document.getElementById('scheduler-section');
-                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                      }, 100);
-                    }}
-                  >
-                    <Clock size={16} />
-                    Schedule for later (Daily / Weekly / 2 per Week)
-                  </button>
-                </div>
-
                 {/* Platform Selection */}
                 <div className="form-section">
                   <div className="section-label-container">
@@ -3967,8 +3940,8 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                   )}
                 </div>
 
-                {/* Scheduler Section - scroll here to see Schedule for Later / 2 per Week */}
-                <div id="scheduler-section" className="form-section scheduler-section">
+                {/* Scheduler Section */}
+                <div className="form-section scheduler-section">
                   <label className="section-label">
                     <Clock size={16} />
                     Scheduler
@@ -4052,12 +4025,13 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                               </div>
                             </div>
                           </label>
-                          <label className={`schedule-type-option ${scheduleType === 'auto' ? 'active' : ''}`}>
+                          <label className={`schedule-type-option disabled ${scheduleType === 'auto' ? 'active' : ''}`}>
                             <input
                               type="radio"
                               name="scheduleType"
                               value="auto"
                               checked={scheduleType === 'auto'}
+                              disabled
                               onChange={() => {
                                 setScheduleType('auto');
                                 setPostData(prev => ({ ...prev, scheduledTime: preferredTime === 'custom' ? `${String(customTimeHours).padStart(2, '0')}:${String(customTimeMinutes).padStart(2, '0')}:${String(customTimeSeconds).padStart(2, '0')}` : preferredTime }));
@@ -4068,7 +4042,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                               <Sparkles size={16} className="schedule-type-icon" />
                               <div>
                                 <span className="schedule-type-label">Auto (Evenly)</span>
-                                <span className="schedule-type-desc">Distribute posts automatically</span>
+                                <span className="schedule-type-desc">Coming soon</span>
                               </div>
                             </div>
                           </label>
@@ -4090,15 +4064,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                                 key={opt.id}
                                 type="button"
                                 className={`posting-frequency-card ${postingFrequency === opt.id ? 'active' : ''}`}
-                                onClick={() => {
-                                  setPostingFrequency(opt.id);
-                                  if (opt.id === '2perweek') {
-                                    setTimeout(() => {
-                                      const el = document.getElementById('two-per-week-section');
-                                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                    }, 150);
-                                  }
-                                }}
+                                onClick={() => setPostingFrequency(opt.id)}
                               >
                                 <span className="freq-label">{opt.label}</span>
                                 <span className="freq-desc">{opt.desc}</span>
@@ -4170,7 +4136,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
                       {/* 2 per Week: Start Date + select 2 days (Mon–Sun); no End Date. Next post = first of those days from start date. */}
                       {scheduleType === 'auto' && postingFrequency === '2perweek' && (
-                        <div id="two-per-week-section" className="two-per-week-section">
+                        <div className="two-per-week-section">
                           <div className="schedule-date-group">
                             <label className="schedule-sub-label">Start Date</label>
                             <input
