@@ -570,10 +570,55 @@ const Analytics = () => {
     }, 3000);
   };
 
+  // Helper: check if a given yyyy-mm-dd string is in the future (date-only)
+  const isFutureDate = (value) => {
+    if (!value) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const date = new Date(value);
+    date.setHours(0, 0, 0, 0);
+    return date > today;
+  };
+
+  // Wrapper to validate custom date range before fetching analytics
+  const fetchAnalyticsOverviewWithValidation = () => {
+    if (filters.period === 'custom') {
+      const { start, end } = filters.customDateRange || {};
+
+      // If both dates are empty, don't change data or show an error yet
+      if (!start && !end) {
+        return;
+      }
+
+      // If one date is missing, show a clear validation message
+      if (!start || !end) {
+        showToast('Please select both start and end dates for the custom range.', 'error');
+        return;
+      }
+
+      // Prevent future dates
+      if (isFutureDate(start) || isFutureDate(end)) {
+        showToast('You cannot select future dates in the analytics time period.', 'error');
+        return;
+      }
+
+      const startDate = new Date(start);
+      const endDate = new Date(end);
+
+      // If range is invalid, show error and do not fetch
+      if (startDate > endDate) {
+        showToast('End date cannot be before start date.', 'error');
+        return;
+      }
+    }
+
+    fetchAnalyticsOverview();
+  };
+
   // Effect to fetch data when filters change or user loads
   useEffect(() => {
     if (user && !dashboardLoading) {
-      fetchAnalyticsOverview();
+      fetchAnalyticsOverviewWithValidation();
     }
   }, [filters, user, dashboardLoading]);
 
@@ -609,13 +654,34 @@ const Analytics = () => {
   };
 
   const handleCustomDateChange = (field, value) => {
-    setFilters(prev => ({
-      ...prev,
-      customDateRange: {
+    setFilters(prev => {
+      // Immediately block future dates from being selected
+      if (isFutureDate(value)) {
+        showToast('You cannot select a future date.', 'error');
+        return prev;
+      }
+
+      const nextRange = {
         ...prev.customDateRange,
         [field]: value
+      };
+
+      // When using a custom range, prevent applying an invalid date range
+      if (prev.period === 'custom' && nextRange.start && nextRange.end) {
+        const startDate = new Date(nextRange.start);
+        const endDate = new Date(nextRange.end);
+
+        if (startDate > endDate) {
+          showToast('End date cannot be before start date.', 'error');
+          return prev; // keep previous valid range and data
+        }
       }
-    }));
+
+      return {
+        ...prev,
+        customDateRange: nextRange
+      };
+    });
   };
 
   // Helper function to format numbers

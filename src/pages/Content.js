@@ -184,13 +184,14 @@ const Content = () => {
   const fetchAllPosts = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await apiClient.request('/api/posts', {
-        params: {
-          limit: 100
-        }
-      });
+      // Use getPosts so pagination params are correctly applied
+      const response = await apiClient.getPosts({ page: 1, limit: 100 });
 
-      const postsData = response?.data?.posts || response?.data || [];
+      // PaginatedResponse returns the posts array in data
+      const postsData = Array.isArray(response?.data)
+        ? response.data
+        : response?.data?.posts || [];
+
       console.log('Fetched posts:', postsData);
 
       setAllPosts(postsData);
@@ -800,13 +801,14 @@ const PostsSubPage = ({
     setPostsError(null);
 
     try {
-      const response = await apiClient.request('/api/posts', {
-        method: 'GET',
-        params: { page: 1, limit: 50 }
-      });
+      // Use getPosts so pagination params are correctly applied
+      const response = await apiClient.getPosts({ page: 1, limit: 50 });
 
       if (response.success && response.data) {
-        const fetchedPosts = response.data.posts || [];
+        const fetchedPosts = Array.isArray(response.data)
+          ? response.data
+          : response.data.posts || [];
+
         setPosts(fetchedPosts);
 
         const now = new Date();

@@ -60,15 +60,15 @@ const Planner = () => {
   const fetchCalendarPosts = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await apiClient.request('/api/posts', {
-        params: {
-          limit: 100
-        }
-      });
+      // Use getPosts so pagination params are correctly applied
+      const response = await apiClient.getPosts({ page: 1, limit: 100 });
 
-      const postsData = response?.data?.posts || response?.data || [];
+      // PaginatedResponse returns the posts array in data
+      const postsData = Array.isArray(response?.data)
+        ? response.data
+        : response?.data?.posts || [];
+
       console.log('Fetched posts:', postsData);
-      
       setCalendarPosts(postsData);
     } catch (error) {
       console.error('Failed to fetch calendar posts:', error);
@@ -81,14 +81,17 @@ const Planner = () => {
   // Fetch draft posts for sidebar
   const fetchDraftPosts = useCallback(async () => {
     try {
-      const response = await apiClient.request('/api/posts', {
-        params: { 
-          status: 'draft',
-          limit: 50
-        }
+      // Include status filter and higher limit so all drafts are available
+      const response = await apiClient.getPosts({
+        status: 'draft',
+        page: 1,
+        limit: 50,
       });
 
-      const draftsData = response?.data?.posts || response?.data || [];
+      const draftsData = Array.isArray(response?.data)
+        ? response.data
+        : response?.data?.posts || [];
+
       setDraftPosts(draftsData);
     } catch (error) {
       console.error('Failed to fetch draft posts:', error);
