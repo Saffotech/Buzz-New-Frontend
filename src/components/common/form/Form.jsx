@@ -63,7 +63,7 @@ const { login, register, isLoading } = useAuth();
   // API call functions
   const sendOTP = async (email) => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/send-otp', {
+      const response = await fetch('/api/auth/send-otp', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -86,7 +86,7 @@ const { login, register, isLoading } = useAuth();
 
   const verifyOTP = async (email, otp) => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/verify-otp', {
+      const response = await fetch('/api/auth/verify-otp', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -109,7 +109,7 @@ const { login, register, isLoading } = useAuth();
 
   const updatePassword = async (email, newPassword) => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/update-password', {
+      const response = await fetch('/api/auth/update-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
