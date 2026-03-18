@@ -224,12 +224,23 @@ const Content = () => {
   // ✅ Update post function for editing
   const handleUpdatePost = async (postId, postData) => {
     try {
+      let response;
 
-
-      const response = await apiClient.request(`/api/posts/${postId}`, {
-        method: 'PUT',
-        body: JSON.stringify(postData)
-      });
+      // If this is a scheduled post and we're changing its schedule, use the dedicated reschedule endpoint
+      if ((selectedPost?.status === 'scheduled' || selectedPost?.status === 'processing') && postData.scheduledDate) {
+        response = await apiClient.request(`/api/scheduler/posts/${postId}/reschedule`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            scheduledDate: postData.scheduledDate
+          })
+        });
+      } else {
+        // Fallback to full update for drafts/other editable states
+        response = await apiClient.request(`/api/posts/${postId}`, {
+          method: 'PUT',
+          body: JSON.stringify(postData)
+        });
+      }
 
       if (response && (response.success || response.data || response._id)) {
         setNotification({

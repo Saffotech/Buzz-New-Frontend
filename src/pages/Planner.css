@@ -754,15 +754,17 @@
   }
 
   .calendar-main {
-    height: 600px;
+    /* Allow calendar to grow and scroll instead of clipping last rows */
     width: 100%;
     overflow-x: hidden;
+    overflow-y: auto;
   }
 
   .calendar-grid {
     padding: 0.5rem;
     width: 100%;
     overflow-x: hidden;
+    overflow-y: auto;
   }
 
   .planner-header {

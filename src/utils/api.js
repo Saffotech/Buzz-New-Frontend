@@ -113,9 +113,7 @@ class ApiClient {
         }
       } catch (jsonError) {
         console.error('JSON parse error:', jsonError);
-        // If JSON parsing fails, create a generic error response
-        const text = await response.text();
-        console.error('Response text:', text);
+        // If JSON parsing fails, fall back to a generic structured error
         data = {
           success: false,
           message: `HTTP error! status: ${response.status}`,
@@ -171,9 +169,11 @@ class ApiClient {
 
       // Handle network errors (CORS, connection refused, etc.)
       if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-        throw new Error(
-          'Unable to connect to server. Please check if the backend is running on http://localhost:5000'
-        );
+        // Log full details for developers
+        console.error('Network error while calling API:', { url, originalError: error });
+
+        // Surface a clear, user-friendly message
+        throw new Error('Please check your internet connection and try again.');
       }
 
       throw error;
@@ -201,6 +201,13 @@ class ApiClient {
 
   async getUserProfile() {
     return this.request('/api/users/profile');
+  }
+
+   async updateUserProfile(profileData) {
+    return this.request('/api/users/profile', {
+      method: 'PUT',
+      body: JSON.stringify(profileData)
+    });
   }
 
   async logout() {

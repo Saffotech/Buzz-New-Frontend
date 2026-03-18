@@ -131,6 +131,8 @@ const AIAssistant = () => {
 };
 
 // Content Generator Tab Component
+const MAX_PROMPT_LENGTH = 500;
+
 const ContentGeneratorTab = ({ loading, setLoading, setError }) => {
   const [formData, setFormData] = useState({
     prompt: '',
@@ -140,6 +142,7 @@ const ContentGeneratorTab = ({ loading, setLoading, setError }) => {
     maxLength: 280
   });
   const [suggestions, setSuggestions] = useState([]);
+  const [selectedContent, setSelectedContent] = useState(null);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -149,7 +152,20 @@ const ContentGeneratorTab = ({ loading, setLoading, setError }) => {
   };
 
   const generateContent = async () => {
-    if (!formData.prompt.trim()) return;
+    const trimmedPrompt = formData.prompt.trim();
+    if (!trimmedPrompt) return;
+
+    // Enforce backend prompt length limit for clear UX
+    if (trimmedPrompt.length > MAX_PROMPT_LENGTH) {
+      setError(`Prompt is too long. Maximum ${MAX_PROMPT_LENGTH} characters are allowed.`);
+      return;
+    }
+
+    // Require at least one target platform
+    if (!formData.platforms || formData.platforms.length === 0) {
+      setError('Please select at least one target platform before generating content.');
+      return;
+    }
 
     setLoading(true);
     setError(null); // Clear previous errors
@@ -282,9 +298,22 @@ const ContentGeneratorTab = ({ loading, setLoading, setError }) => {
   };
 
   const useContent = (suggestion) => {
-
-    // This will integrate with CreatePost modal
-    console.log('Using content:', suggestion);
+    // Normalize suggestion into a structured, editable block
+    if (suggestion.isYouTube) {
+      setSelectedContent({
+        platform: 'YouTube',
+        title: suggestion.title || '',
+        body: suggestion.content || '',
+        hashtags: (suggestion.hashtags || []).join(' ')
+      });
+    } else {
+      setSelectedContent({
+        platform: suggestion.platform,
+        title: '',
+        body: suggestion.content || '',
+        hashtags: (suggestion.hashtags || []).join(' ')
+      });
+    }
   };
 
   return (
@@ -297,7 +326,7 @@ const ContentGeneratorTab = ({ loading, setLoading, setError }) => {
         </div>
 
         <div className="form-group">
-          <label htmlFor="prompt">Your Idea or Prompt</label>
+          <label htmlFor="prompt">Your Idea or Prompt (max {MAX_PROMPT_LENGTH} characters)</label>
           <textarea
             id="prompt"
             value={formData.prompt}
@@ -306,6 +335,16 @@ const ContentGeneratorTab = ({ loading, setLoading, setError }) => {
             rows={4}
             className="prompt-input"
           />
+          <div className="prompt-meta">
+            <span className="prompt-counter">
+              {formData.prompt.length} / {MAX_PROMPT_LENGTH} characters
+            </span>
+            {formData.prompt.trim().length > MAX_PROMPT_LENGTH && (
+              <span className="prompt-error">
+                Please shorten your prompt to {MAX_PROMPT_LENGTH} characters.
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="form-row">
@@ -354,7 +393,13 @@ const ContentGeneratorTab = ({ loading, setLoading, setError }) => {
 
         <button
           onClick={generateContent}
-          disabled={loading || !formData.prompt.trim()}
+          disabled={
+            loading ||
+            !formData.prompt.trim() ||
+            formData.prompt.trim().length > MAX_PROMPT_LENGTH ||
+            !formData.platforms ||
+            formData.platforms.length === 0
+          }
           className="generate-button"
         >
           {loading ? (
@@ -391,6 +436,59 @@ const ContentGeneratorTab = ({ loading, setLoading, setError }) => {
           </div>
         </div>
       )}
+
+      {/* Selected Content Preview / Editor */}
+      {selectedContent && (
+        <div className="selected-content-section">
+          <div className="section-header">
+            <h2>Selected Content</h2>
+            <p>You can review and edit this before using it in your posts.</p>
+          </div>
+
+          <div className="selected-content-box">
+            {selectedContent.platform && (
+              <div className="selected-platform-label">
+                For: {selectedContent.platform}
+              </div>
+            )}
+
+            {selectedContent.title !== undefined && (
+              <div className="form-group">
+                <label>Title</label>
+                <input
+                  type="text"
+                  value={selectedContent.title}
+                  onChange={(e) =>
+                    setSelectedContent(prev => ({ ...prev, title: e.target.value }))
+                  }
+                />
+              </div>
+            )}
+
+            <div className="form-group">
+              <label>Content</label>
+              <textarea
+                rows={4}
+                value={selectedContent.body}
+                onChange={(e) =>
+                  setSelectedContent(prev => ({ ...prev, body: e.target.value }))
+                }
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Hashtags</label>
+              <input
+                type="text"
+                value={selectedContent.hashtags}
+                onChange={(e) =>
+                  setSelectedContent(prev => ({ ...prev, hashtags: e.target.value }))
+                }
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -400,16 +498,20 @@ const SuggestionCard = ({ suggestion, onCopy, onUse }) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
-    const textToCopy = suggestion.content + " " + suggestion.hashtags.join(" ");
+    let textToCopy;
+
+    if (suggestion.isYouTube) {
+      textToCopy = `Title: ${suggestion.title}\n\nDescription:\n${suggestion.content}\n\nTags: ${suggestion.hashtags.join(' ')}`;
+    } else {
+      textToCopy = suggestion.content + " " + suggestion.hashtags.join(" ");
+    }
+
     onCopy(textToCopy);
     setCopied(true);
 
     // Reset after 3 seconds
     setTimeout(() => setCopied(false), 3000);
   };
-
-  
-
 
 
   // Special rendering for YouTube content
@@ -459,13 +561,11 @@ const SuggestionCard = ({ suggestion, onCopy, onUse }) => {
 
         <div className="suggestion-actions">
           <button
-            onClick={() => onCopy(
-              `Title: ${suggestion.title}\n\nDescription:\n${suggestion.content}\n\nTags: ${suggestion.hashtags.join(' ')}`
-            )}
-            className="action-button secondary"
+            onClick={handleCopy}
+            className={`action-button secondary ${copied ? "copied" : ""}`}
           >
             <Copy size={16} />
-            Copy
+            {copied ? "Copied" : "Copy"}
           </button>
           <button
             onClick={() => onUse(suggestion)}
@@ -530,6 +630,7 @@ const HashtagSuggesterTab = ({ loading, setLoading }) => {
   });
   const [hashtags, setHashtags] = useState([]);
   const [selectedHashtags, setSelectedHashtags] = useState([]);
+  const [copied, setCopied] = useState(false);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -600,9 +701,16 @@ const HashtagSuggesterTab = ({ loading, setLoading }) => {
     );
   };
 
-  const copySelected = () => {
-    if (selectedHashtags.length > 0) {
-      navigator.clipboard.writeText(selectedHashtags.join(' '));
+  const copySelected = async () => {
+    const toCopy = selectedHashtags.length > 0 ? selectedHashtags : hashtags;
+    if (!toCopy || toCopy.length === 0) return;
+
+    try {
+      await navigator.clipboard.writeText(toCopy.join(' '));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy hashtags:', err);
     }
   };
 
@@ -700,11 +808,11 @@ const HashtagSuggesterTab = ({ loading, setLoading }) => {
             <div className="selected-hashtags">
               <h3>Selected ({selectedHashtags.length})</h3>
               <div className="selected-list">
-                {selectedHashtags.join(' ')}
+                {(selectedHashtags.length > 0 ? selectedHashtags : hashtags).join(' ')}
               </div>
               <button onClick={copySelected} className="copy-button">
                 <Copy size={16} />
-                Copy Selected
+                {copied ? 'Copied successfully' : 'Copy Hashtags'}
               </button>
             </div>
           )}

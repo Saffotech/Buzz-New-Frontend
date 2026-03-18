@@ -629,6 +629,18 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     // ⭐ NEW — Platform selection check (warning but allow upload)
     const selectedPlatforms = postData?.platforms || [];
     const platform = selectedPlatforms.length > 0 ? selectedPlatforms[0] : 'instagram'; // Default to instagram for validation
+    const isYouTubeSelected = selectedPlatforms.includes('youtube');
+
+    // For YouTube posts we only support a single video file
+    const existingYouTubeVideoCount =
+      isYouTubeSelected && Array.isArray(postData.images)
+        ? postData.images.filter(img =>
+            img.fileType === 'video' ||
+            (img.url && (img.url.match(/\.(mp4|mov|webm|avi|mkv)(\?|$)/i) || img.url.includes('video'))) ||
+            (img.type && img.type.startsWith('video/'))
+          ).length
+        : 0;
+    let newYouTubeVideoCount = 0;
 
     // ✅ Add immediate local previews before upload
     const localPreviews = [];
@@ -639,6 +651,16 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       if (!isImage && !isVideo) {
         invalidFiles.push({ file, reason: "Unsupported file type" });
         continue;
+      }
+
+      // 🔒 YouTube constraint: only one video allowed per post
+      if (isYouTubeSelected && isVideo) {
+        const totalVideoCount = existingYouTubeVideoCount + newYouTubeVideoCount;
+        if (totalVideoCount >= 1) {
+          invalidFiles.push({ file, reason: "YouTube posts support only one video file per post" });
+          continue;
+        }
+        newYouTubeVideoCount += 1;
       }
 
       if (isVideo && file.size > 500 * 1024 * 1024) { // ✅ CHANGED: 500MB
@@ -885,12 +907,34 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     e.stopPropagation();
     setDragActive(false);
 
+    // Require at least one platform + account before uploading media via drag & drop
+    if (!postData.platforms || postData.platforms.length === 0) {
+      showToast('Please select at least one social media platform before uploading media.', 'error');
+      return;
+    }
+
+    if (!hasAnySelectedAccount()) {
+      showToast('Please select at least one social media account before uploading media.', 'error');
+      return;
+    }
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleFileUpload(e.dataTransfer.files);
     }
   };
 
   const handleUploadAreaClick = () => {
+    // Require at least one platform + account before uploading media via click
+    if (!postData.platforms || postData.platforms.length === 0) {
+      showToast('Please select at least one social media platform before uploading media.', 'error');
+      return;
+    }
+
+    if (!hasAnySelectedAccount()) {
+      showToast('Please select at least one social media account before uploading media.', 'error');
+      return;
+    }
+
     fileInputRef.current?.click();
   };
 
@@ -1258,6 +1302,28 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     showToast('Media removed', 'info');
   };
 
+  // ✅ Clear all media and reset file input
+  const clearAllMedia = () => {
+    // Revoke any blob URLs from previews to avoid memory leaks
+    (postData.images || []).forEach((mediaItem) => {
+      const urlToRevoke = mediaItem?.displayUrl || mediaItem?.url;
+      if (urlToRevoke && urlToRevoke.startsWith('blob:')) {
+        URL.revokeObjectURL(urlToRevoke);
+      }
+    });
+
+    setPostData((prev) => ({
+      ...prev,
+      images: []
+    }));
+
+    // Reset file input so selecting the same file again triggers onChange
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    showToast('All media removed', 'info');
+  };
+
   // Helper function to check if there's a video in uploaded media
   const hasVideo = () => {
     return postData.images && postData.images.some(img => {
@@ -1400,6 +1466,14 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     return postData.platforms.includes('instagram', 'youtube', 'linkedin');
   };
 
+  // Check if user has selected at least one social media account
+  const hasAnySelectedAccount = () => {
+    const selected = postData.selectedAccounts || {};
+    return Object.values(selected).some((accounts) =>
+      (accounts || []).some((acc) => acc != null && acc !== '')
+    );
+  };
+
   // Toast notification function
   const showToast = (message, type = 'info', duration = 5000) => {
     setToast({ message, type });
@@ -1517,20 +1591,43 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       return false;
     }
 
-    // Add YouTube-specific validation
-    if (postData.platforms.includes('youtube') && !validateYouTubeContent()) {
-      return false;
+    // Add YouTube-specific validation (only when a YouTube account is actually selected)
+    if (postData.platforms.includes('youtube')) {
+      const youtubeAccounts =
+        (postData.selectedAccounts?.youtube || []).filter(account => account != null && account !== '');
+      if (youtubeAccounts.length > 0 && !validateYouTubeContent()) {
+        return false;
+      }
     }
 
     // Check if accounts are selected for platforms that require it
-    const platformsRequiringAccounts = ['instagram', 'facebook', 'linkedin']; // Added LinkedIn
+    // Instagram and Facebook always require at least one valid account
+    const platformsRequiringAccounts = ['instagram', 'facebook'];
     for (const platform of postData.platforms) {
       if (platformsRequiringAccounts.includes(platform)) {
         const selectedAccountsForPlatform = postData.selectedAccounts[platform] || [];
-        const validAccounts = selectedAccountsForPlatform.filter(account => account != null && account !== '');
+        const validAccounts = selectedAccountsForPlatform.filter(
+          (account) => account != null && account !== ''
+        );
 
         if (validAccounts.length === 0) {
-          const platformName = platforms.find(p => p.id === platform)?.name;
+          const platformName = platforms.find((p) => p.id === platform)?.name;
+          setError(`Please select at least one valid account for ${platformName}`);
+          return false;
+        }
+      }
+
+      // LinkedIn: only enforce account validation if the user actually selected LinkedIn accounts.
+      // If LinkedIn is toggled on as a platform but has zero selected accounts, skip this check
+      // so that deselecting LinkedIn accounts doesn't block publishing to other platforms.
+      if (platform === 'linkedin') {
+        const selectedAccountsForPlatform = postData.selectedAccounts?.linkedin || [];
+        const validAccounts = selectedAccountsForPlatform.filter(
+          (account) => account != null && account !== ''
+        );
+
+        if (selectedAccountsForPlatform.length > 0 && validAccounts.length === 0) {
+          const platformName = platforms.find((p) => p.id === 'linkedin')?.name || 'LinkedIn';
           setError(`Please select at least one valid account for ${platformName}`);
           return false;
         }
@@ -1542,6 +1639,13 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
   const validateYouTubeContent = () => {
     if (postData.platforms.includes('youtube')) {
+      // If no YouTube accounts are selected, skip YouTube-specific validation entirely
+      const youtubeAccounts =
+        (postData.selectedAccounts?.youtube || []).filter(account => account != null && account !== '');
+      if (youtubeAccounts.length === 0) {
+        return true;
+      }
+
       // Check if we have any video
       const hasVideo = postData.images.some(img =>
         img.fileType === 'video' ||
@@ -1789,6 +1893,11 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
       // 🔹 Unified Story Publishing (Instagram only): add instagram_story to payload when enabled
       let finalPlatforms = [...(postData.platforms || [])];
+      // If YouTube is selected as a platform but there are no selected YouTube accounts,
+      // do not send YouTube in the platforms list to the backend.
+      if (!cleanedSelectedAccounts.youtube || cleanedSelectedAccounts.youtube.length === 0) {
+        finalPlatforms = finalPlatforms.filter(p => p !== 'youtube');
+      }
       if (storyPublishingEnabled) {
         finalPlatforms.push('instagram_story');
         const igAccountIds = cleanedSelectedAccounts.instagram || [];
@@ -2184,9 +2293,11 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       console.log('✅ FRONTEND - userProfile.connectedAccounts:',
         userProfile?.connectedAccounts?.map(acc => ({ id: acc._id, username: acc.username })));
 
-      // ✅ Reset and close modal
-      resetForm();
-      onClose();
+      // ✅ Let success/warning toast be visible, then reset and close modal
+      setTimeout(() => {
+        resetForm();
+        onClose();
+      }, 2500);
 
     } catch (error) {
       console.error('❌ Failed to create/publish post:', error);
@@ -3532,6 +3643,13 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                     rows={6}
                     required
                   />
+                  {charCount.remaining <= 0 && (
+                    <p className="char-limit-message">
+                      {charCount.remaining === 0
+                        ? 'You have reached the maximum character limit.'
+                        : 'You have exceeded the maximum character limit.'}
+                    </p>
+                  )}
                 </div>
 
                 {/* Hashtags and Mentions */}
@@ -3692,7 +3810,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                           <button
                             type="button"
                             className="clear-all-media"
-                            onClick={() => setPostData(prev => ({ ...prev, images: [] }))}
+                            onClick={clearAllMedia}
                             title="Remove all media"
                           >
                             Clear All

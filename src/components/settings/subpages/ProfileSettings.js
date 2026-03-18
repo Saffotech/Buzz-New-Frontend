@@ -143,6 +143,43 @@ const ProfileSettings = ({ onNotify }) => {
     }
   };
 
+  const [updatingProfile, setUpdatingProfile] = useState(false);
+
+  const handleProfileUpdate = async () => {
+    const trimmedName = (name || '').trim();
+
+    if (!trimmedName) {
+      toast.error('Please enter a valid profile name.');
+      return;
+    }
+
+    if (trimmedName.length > 80) {
+      toast.error('Profile name must be 80 characters or less.');
+      return;
+    }
+
+    setUpdatingProfile(true);
+    try {
+      const res = await apiClient.updateUserProfile({ displayName: trimmedName });
+
+      if (res.success) {
+        setName(res.data.displayName || trimmedName);
+        toast.success('Profile name updated successfully.');
+
+        if (onNotify) {
+          onNotify('Profile name updated successfully.');
+        }
+      } else {
+        toast.error(res.message || 'Failed to update profile name.');
+      }
+    } catch (err) {
+      console.error('Profile update error:', err);
+      toast.error(err.response?.data?.message || 'Failed to update profile name.');
+    } finally {
+      setUpdatingProfile(false);
+    }
+  };
+
   return (
     <div className="settings-subpage">
       <div className="settings-content">
@@ -150,12 +187,13 @@ const ProfileSettings = ({ onNotify }) => {
           <div className="content-card">
             <div className="form-row">
               <div className="form-group">
-                <label>Name</label>
+                <label>Profile Name</label>
                 <input
                   type="text"
                   value={name}
-                  readOnly
-                  className="readonly-input"
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Enter your profile name"
+                  className="text-input"
                 />
               </div>
               <div className="form-group">
@@ -167,6 +205,16 @@ const ProfileSettings = ({ onNotify }) => {
                   className="readonly-input"
                 />
               </div>
+            </div>
+            <div className="form-actions">
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={handleProfileUpdate}
+                disabled={updatingProfile}
+              >
+                {updatingProfile ? 'Saving...' : 'Save Changes'}
+              </button>
             </div>
           </div>
 

@@ -452,7 +452,14 @@ const Analytics = () => {
 
     } catch (err) {
       console.error('Error fetching analytics data:', err);
-      setError(err.response?.data?.message || 'Failed to load analytics data. Please try again.');
+
+      const fallbackMessage = 'Failed to load analytics data. Please try again.';
+      setError(
+        err?.message ||
+        err?.response?.data?.message ||
+        fallbackMessage
+      );
+
       setAnalyticsData({
         overview: null,
         posts: [],
@@ -481,6 +488,10 @@ const Analytics = () => {
       });
 
       if (response.success) {
+        // First refresh both overview and individual account data;
+        // if this fails (e.g. due to network issues), it will throw and be handled by catch.
+        await fetchAnalyticsOverview();
+
         // Prefer backend's connected platforms count so production shows correct channel count (e.g. 5)
         const connectedCount = response.data?.connectedPlatformsCount;
         let platformCount;
@@ -500,14 +511,17 @@ const Analytics = () => {
           `Successfully synced analytics for ${platformCount} ${label}`,
           'success'
         );
-        // This will refresh both overview and individual account data
-        await fetchAnalyticsOverview();
       } else {
         throw new Error(response.message || 'Failed to sync analytics');
       }
     } catch (error) {
       console.error('Error syncing analytics:', error);
-      showToast('Failed to sync analytics data', 'error');
+      const fallbackMessage = 'Failed to sync analytics data.';
+      const msg =
+        error?.message ||
+        error?.response?.data?.message ||
+        fallbackMessage;
+      showToast(msg, 'error');
     } finally {
       setSyncing(false);
     }
