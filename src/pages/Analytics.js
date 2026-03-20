@@ -437,8 +437,26 @@ const Analytics = () => {
       ]);
 
       if (overviewResponse.success && overviewResponse.data) {
-        const advancedData = generateMockAdvancedData();
+        // If backend returned success but there are no posts in the selected range,
+        // show an empty-state message instead of a generic failure message.
+        if (overviewResponse.data.totalPosts === 0) {
+          setError('No Posts Found');
+          setAnalyticsData({
+            overview: null,
+            posts: [],
+            topPost: null,
+            engagement: null,
+            audience: null,
+            growth: null,
+            hashtags: null,
+            contentTypes: null,
+            bestTimes: null
+          });
+          return;
+        }
 
+        const advancedData = generateMockAdvancedData();
+        
         setAnalyticsData({
           overview: overviewResponse.data,
           posts: [],

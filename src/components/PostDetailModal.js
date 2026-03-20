@@ -565,8 +565,8 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
 
   // Add this function to your component
   const handleRetryPublish = async (platformPost) => {
-    if (!platformPost || !platformPost.accountId) {
-      showToast('Cannot republish: missing account information', 'error');
+    if (!platformPost || !platformPost.platform) {
+      showToast('Cannot republish: missing platform information', 'error');
       return;
     }
 
@@ -583,21 +583,18 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
         if (!token) throw new Error('Authentication token not found');
 
         const postId = post._id || post.id;
-        console.log(`🚀 Re-publishing ${platformPost.platform} for post ${postId}...`);
+        console.log(`🚀 Republishing post ${postId} (triggered from ${platformPost.platform} failure)...`);
 
+        // Backend republish endpoint republishes based on the post stored platforms/platformPosts.
+        // So we don't require platformPost.accountId to exist on the frontend.
         const response = await axios.post(
           apiClient.buildUrl(`/posts/${postId}/publish`),
-          {
-            platforms: [platformPost.platform],
-            accountIds: [platformPost.accountId],
-          },
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
         );
 
         console.log('✅ Republish response:', response.data);
-        showToast(`Successfully republished to ${platformPost.platform}!`, 'success');
+        showToast(`Republish triggered for ${platformPost.platform}!`, 'success');
 
         // Optional: trigger parent refresh silently
         if (onPostAgain && typeof onPostAgain === 'function') {

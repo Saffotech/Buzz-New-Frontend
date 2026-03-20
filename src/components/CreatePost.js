@@ -59,7 +59,7 @@ import { faXTwitter } from "@fortawesome/free-brands-svg-icons";
 import { validateImageDimensions, autoResizeImage, isValidAspectRatio, getOptimalImageType } from '../utils/imageUtils';
 import DIMENSIONS from '../utils/dimensions-config';
 
-const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initialData }) => {
+const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initialData, onPostPublished }) => {
   const [imgIndex, setImgIndex] = useState(0);
   const [hoveredPlatform, setHoveredPlatform] = useState(null);
   const { uploadMedia } = useMedia();
@@ -2203,6 +2203,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
         }
 
         const postDataFromCreate = createResponse.data || {};
+        const createdPostId = postDataFromCreate.id || postDataFromCreate._id;
         const alreadyPublished =
           postDataFromCreate.status === 'published' ||
           (Array.isArray(postDataFromCreate.platformPosts) &&
@@ -2245,6 +2246,10 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
           } else {
             showToast(createResponse.message || 'Post published successfully!', 'success');
           }
+
+          if (createdPostId && typeof onPostPublished === 'function') {
+            onPostPublished(createdPostId);
+          }
         } else {
           // Post was created as draft/scheduled — call publish endpoint
           const token =
@@ -2286,6 +2291,10 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
             }
           } else {
             throw new Error(publishResponse.message || 'Publishing failed');
+          }
+
+          if (postId && typeof onPostPublished === 'function') {
+            onPostPublished(postId);
           }
         }
       }

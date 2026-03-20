@@ -114,6 +114,14 @@ const CreatePostButton = ({ onPostCreated, refreshPosts }) => {
           setSelectedPost(null);
         }}
         onPostCreated={handleCreatePost}
+        onPostPublished={() => {
+          if (refreshPosts) {
+            // Immediate refresh so status updates from "Processing" -> "Published" quickly.
+            refreshPosts();
+            setTimeout(() => refreshPosts(), 8000);
+            setTimeout(() => refreshPosts(), 20000);
+          }
+        }}
         initialData={selectedPost}
       />
 
@@ -185,6 +193,7 @@ const Content = () => {
     setLoading(true);
     try {
       // Use getPosts so pagination params are correctly applied
+      // Increase limit so scheduled posts are not missing from the initial view.
       const response = await apiClient.getPosts({ page: 1, limit: 100 });
 
       // PaginatedResponse returns the posts array in data
@@ -698,6 +707,11 @@ const Content = () => {
           ? (postData) => handleUpdatePost(selectedPost._id || selectedPost.id, postData)
           : handleCreatePost
         }
+        onPostPublished={() => {
+          fetchAllPosts();
+          setTimeout(() => fetchAllPosts(), 8000);
+          setTimeout(() => fetchAllPosts(), 20000);
+        }}
         initialData={selectedPost}
       />
 
@@ -707,6 +721,7 @@ const Content = () => {
         isOpen={showPostDetail}
         onClose={() => setShowPostDetail(false)}
         onEdit={handleEditPost}
+        onPostAgain={() => fetchAllPosts()}
         onDelete={() => {
           setShowPostDetail(false);
           showDeleteConfirmation(selectedPost);
@@ -813,7 +828,8 @@ const PostsSubPage = ({
 
     try {
       // Use getPosts so pagination params are correctly applied
-      const response = await apiClient.getPosts({ page: 1, limit: 50 });
+      // Increase limit so scheduled posts are not missing when refreshing.
+      const response = await apiClient.getPosts({ page: 1, limit: 100 });
 
       if (response.success && response.data) {
         const fetchedPosts = Array.isArray(response.data)

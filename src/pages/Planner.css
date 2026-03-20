@@ -1089,7 +1089,8 @@
 /* Month view specific styling */
 .calendar-day .day-posts {
   flex: 1;
-  overflow: hidden;
+  /* Allow day cell to expand/show all scheduled icons for the selected date */
+  overflow: visible;
   padding: 2px;
 }
 
