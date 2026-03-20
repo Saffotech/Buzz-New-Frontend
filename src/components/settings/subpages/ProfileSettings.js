@@ -57,9 +57,9 @@ const ProfileSettings = ({ onNotify }) => {
     setVerifyingPassword(true);
     try {
       // Call API to verify current password
-      const res = await apiClient.verifyPassword(currentPassword);
+      const res = await apiClient.verifyPassword(currentPassword.trim());
 
-      if (res.success) {
+      if (res && res.success) {
         setCurrentPasswordVerified(true);
         toast.success('Password verified! You can now set a new password.');
       } else {
@@ -94,10 +94,14 @@ const ProfileSettings = ({ onNotify }) => {
 
     setUpdatingPassword(true);
     try {
-      const res = await apiClient.updatePassword(currentPassword, newPassword);
+      const res = await apiClient.updatePassword(
+        currentPassword.trim(),
+        newPassword.trim()
+      );
 
-      if (res.data.success) {
-        toast.success('Password updated successfully');
+      // SuccessResponse: { success, message, data? } at top level (not res.data.success)
+      if (res && res.success) {
+        toast.success(res.message || 'Password updated successfully');
         // Reset form
         setShowPasswordForm(false);
         setCurrentPassword('');
@@ -115,7 +119,7 @@ const ProfileSettings = ({ onNotify }) => {
       }
     } catch (err) {
       console.error('Password update error:', err);
-      toast.error(err.response?.data?.message || 'Failed to update password');
+      toast.error(err.message || err.response?.data?.message || 'Failed to update password');
     } finally {
       setUpdatingPassword(false);
     }

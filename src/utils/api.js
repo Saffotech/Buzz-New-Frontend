@@ -63,16 +63,22 @@ class ApiClient {
   async request(endpoint, options = {}) {
     const url = this.buildUrl(endpoint);
     const method = (options.method || 'GET').toUpperCase();
+    const { headers: optionHeaders, data: optionData, ...restOptions } = options;
     // fetch() uses "body", not "data" - ensure payload is sent for PUT/POST/PATCH
-    const body = options.body != null
-      ? options.body
-      : (options.data != null && ['PUT', 'POST', 'PATCH'].includes(method)
-        ? JSON.stringify(options.data)
-        : undefined);
+    const body =
+      options.body != null
+        ? options.body
+        : optionData != null && ['PUT', 'POST', 'PATCH'].includes(method)
+          ? JSON.stringify(optionData)
+          : undefined;
+    // Merge headers so callers never wipe Authorization / Content-Type
     const config = {
-      headers: this.getAuthHeaders(),
-      ...options,
+      ...restOptions,
       method,
+      headers: {
+        ...this.getAuthHeaders(),
+        ...(optionHeaders || {})
+      },
       ...(body !== undefined && { body })
     };
     delete config.data; // avoid passing data to fetch
@@ -571,7 +577,8 @@ class ApiClient {
   }
 
   async updatePassword(currentPassword, newPassword) {
-    return this.request('/api/users/update-password', {
+    // Backend route: PUT /users/password (see app/routers/users.py)
+    return this.request('/api/users/password', {
       method: 'PUT',
       body: JSON.stringify({ currentPassword, newPassword })
     });
