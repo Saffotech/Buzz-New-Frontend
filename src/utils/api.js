@@ -414,6 +414,11 @@ class ApiClient {
     return this.request('/api/integrations/canva/disconnect', { method: 'DELETE' });
   }
 
+  /** App-wide media storage (S3 vs local) — not a per-user connect like Drive. */
+  async getStorageIntegrationStatus() {
+    return this.request('/api/integrations/storage/status');
+  }
+
   // Analytics endpoints
   async getAnalyticsOverview() {
     return this.request('/api/analytics/overview');

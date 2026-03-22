@@ -58,6 +58,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXTwitter } from "@fortawesome/free-brands-svg-icons";
 import { validateImageDimensions, autoResizeImage, isValidAspectRatio, getOptimalImageType } from '../utils/imageUtils';
 import DIMENSIONS from '../utils/dimensions-config';
+import { getMediaDisplayUrl as getDisplayUrl } from '../utils/mediaDisplayUrl';
 
 const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initialData, onPostPublished }) => {
   const [imgIndex, setImgIndex] = useState(0);
@@ -1365,8 +1366,6 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     }
     return Image;
   };
-
-  const getDisplayUrl = (item) => item?.displayUrl || item?.url;
 
   const formatFileSize = (bytes) => {
     if (bytes === 0) return '0 Bytes';

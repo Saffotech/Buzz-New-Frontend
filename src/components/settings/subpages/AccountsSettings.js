@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { CheckCircle, Info, AlertCircle, Plus, Trash2, Check, Link2, Instagram, Twitter, Facebook, Linkedin, Youtube, User, X, AlertTriangle, Building, Briefcase, Cloud, Palette } from 'lucide-react';
+import { CheckCircle, Info, AlertCircle, Plus, Trash2, Check, Link2, Instagram, Twitter, Facebook, Linkedin, Youtube, User, X, AlertTriangle, Building, Briefcase, Cloud, Palette, HardDrive } from 'lucide-react';
 import SettingsCard from '../SettingsCard';
 import { useAuth } from '../../../hooks/useAuth';
 import toast from 'react-hot-toast';
@@ -2258,6 +2258,8 @@ const AccountsSettings = ({ onNotify }) => {
   const [googleDriveConnected, setGoogleDriveConnected] = useState(false);
   const [oneDriveConnected, setOneDriveConnected] = useState(false);
   const [canvaConnected, setCanvaConnected] = useState(false);
+  /** App-wide S3 (from API); not OAuth — informational only. undefined = loading */
+  const [storageS3, setStorageS3] = useState(undefined);
 
   const handleCloseTerms = () => {
     setTermsConditionModal({
@@ -2590,6 +2592,15 @@ const AccountsSettings = ({ onNotify }) => {
           } catch (canvaErr) {
             console.error('Error fetching Canva status:', canvaErr);
             setCanvaConnected(false);
+          }
+
+          try {
+            const stRes = await apiClient.getStorageIntegrationStatus();
+            const stData = stRes?.data ?? stRes;
+            setStorageS3(stData && typeof stData === 'object' ? stData : null);
+          } catch (stErr) {
+            console.error('Error fetching storage status:', stErr);
+            setStorageS3(null);
           }
 
           // Debug: Log all accounts before setting
@@ -3884,6 +3895,44 @@ const AccountsSettings = ({ onNotify }) => {
                 </button>
               </span>
             )}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', border: '1px solid #E5E7EB', borderRadius: '8px', marginBottom: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <HardDrive size={24} style={{ color: '#FF9900' }} />
+              <div>
+                <div style={{ fontWeight: '600', color: '#111827' }}>AWS S3 (media storage)</div>
+                <div style={{ fontSize: '13px', color: '#6B7280' }}>
+                  {storageS3 === undefined && 'Loading storage status…'}
+                  {storageS3 === null && 'Could not load status — uploads still work per your deployment.'}
+                  {storageS3 != null && storageS3.s3_ready &&
+                    'Active — uploaded media for this app is stored in Amazon S3 (configured by your administrator).'}
+                  {storageS3 != null && !storageS3.s3_ready && storageS3.s3_intended &&
+                    'S3 is enabled for this server but not fully reachable — contact your administrator if uploads fail.'}
+                  {storageS3 != null && !storageS3.s3_ready && !storageS3.s3_intended &&
+                    'Server storage — this deployment uses local/VPS storage for uploads (not a personal account connection).'}
+                </div>
+              </div>
+            </div>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+              {storageS3 === undefined && (
+                <span style={{ fontSize: '13px', color: '#9CA3AF' }}>…</span>
+              )}
+              {storageS3 != null && storageS3.s3_ready && (
+                <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#059669', fontSize: '14px', fontWeight: '500' }}>
+                  <CheckCircle size={18} /> Active
+                </span>
+              )}
+              {storageS3 != null && !storageS3.s3_ready && storageS3.s3_intended && (
+                <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#D97706', fontSize: '14px', fontWeight: '500' }}>
+                  <AlertCircle size={18} /> Check config
+                </span>
+              )}
+              {storageS3 != null && !storageS3.s3_ready && !storageS3.s3_intended && (
+                <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#6B7280', fontSize: '14px', fontWeight: '500' }}>
+                  <Info size={18} /> Server
+                </span>
+              )}
+            </span>
           </div>
         </SettingsCard>
 
