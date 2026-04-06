@@ -203,6 +203,123 @@
   opacity: 0.7;
 }
 
+/* Post-created success toast (multi-platform links) */
+.notification.success:has(.post-created-toast-inner) {
+  background-color: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  color: #111827;
+  align-items: flex-start;
+  max-width: 380px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+}
+
+.post-created-toast-inner {
+  text-align: left;
+  flex: 1;
+  min-width: 0;
+}
+
+.post-created-toast-title {
+  color: #16a34a;
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.3;
+}
+
+.post-created-toast-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Per row: status tick/X | platform icon | label + optional external link */
+.post-created-toast-row {
+  display: grid;
+  grid-template-columns: 22px 26px minmax(0, 1fr);
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.9rem;
+  line-height: 1.3;
+}
+
+.post-created-toast-status-icon {
+  flex-shrink: 0;
+  justify-self: center;
+}
+
+.post-created-toast-status-ok {
+  color: #16a34a;
+}
+
+.post-created-toast-status-fail {
+  color: #dc2626;
+}
+
+.post-created-toast-row-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-width: 0;
+  text-decoration: none;
+  color: #1f2937;
+}
+
+.post-created-toast-row-link:hover {
+  color: #0f172a;
+}
+
+.post-created-toast-row-nolink {
+  color: #1f2937;
+  min-width: 0;
+}
+
+.post-created-toast-row-external {
+  flex-shrink: 0;
+  color: #64748b;
+}
+
+.post-created-toast-row-failed .post-created-toast-fail-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.post-created-toast-fail-title {
+  font-weight: 600;
+  color: #b91c1c;
+}
+
+.post-created-toast-fail-detail {
+  font-size: 0.8rem;
+  color: #64748b;
+  word-break: break-word;
+}
+
+.post-created-toast-platform-icon {
+  flex-shrink: 0;
+}
+
+.post-created-toast-ig {
+  color: #e4405f;
+}
+
+.post-created-toast-fb {
+  color: #1877f2;
+}
+
+.post-created-toast-li {
+  color: #0a66c2;
+}
+
+.post-created-toast-yt {
+  color: #ff0000;
+}
+
 
 /* Page Header */
 .page-header {

@@ -154,6 +154,10 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   const [reelCoverImage, setReelCoverImage] = useState(null);
   const reelCoverFileInputRef = useRef(null);
 
+  // ✅ Published links modal (shown after successful Manual Publish)
+  const [showPublishedLinksModal, setShowPublishedLinksModal] = useState(false);
+  const [publishedLinks, setPublishedLinks] = useState([]); // [{ platform, url }]
+
   // Normalize date to YYYY-MM-DD for API and date input (handles Date object or string)
   const toDateOnlyString = (val) => {
     if (val == null || val === '') return '';
@@ -943,18 +947,38 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     fileInputRef.current?.click();
   };
 
+  // Require same prerequisites as uploading: platform selected + at least one connected account.
+  // Used for cloud imports too (Google Drive/OneDrive/Canva/S3 via media library).
+  const validateImportAllowed = () => {
+    if (!postData.platforms || postData.platforms.length === 0) {
+      showToast('Please select at least one social media platform before importing media.', 'error');
+      return false;
+    }
+
+    if (!hasAnySelectedAccount()) {
+      showToast('Please select at least one social media account before importing media.', 'error');
+      return false;
+    }
+
+    return true;
+  };
+
   // Media source selection
   const handleMediaSourceSelect = (source) => {
     setShowMediaSourceModal(false);
     if (source === 'local') {
       handleUploadAreaClick();
     } else if (source === 'google') {
+      if (!validateImportAllowed()) return;
       setShowGoogleDriveModal(true);
     } else if (source === 'oneDrive') {
+      if (!validateImportAllowed()) return;
       setShowOneDriveModal(true);
     } else if (source === 'canva') {
+      if (!validateImportAllowed()) return;
       setShowCanvaModal(true);
     } else {
+      if (!validateImportAllowed()) return;
       // For now, open the media library for other cloud sources
       setShowMediaLibrary(true);
     }
@@ -976,6 +1000,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
   // Import a file from Google Drive into post media (same shape as upload response)
   const handleImportFromGoogleDrive = async (fileId) => {
+    if (!validateImportAllowed()) return;
     if (!fileId || googleDriveImportingFileId) return;
     setGoogleDriveImportingFileId(fileId);
     setError(null);
@@ -1030,6 +1055,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   };
 
   const handleImportSelectedFromGoogleDrive = async () => {
+    if (!validateImportAllowed()) return;
     if (googleDriveBatchImporting || googleDriveImportingFileId) return;
     const ids = Array.isArray(googleDriveSelectedFileIds) ? googleDriveSelectedFileIds : [];
     if (ids.length === 0) return;
@@ -1109,6 +1135,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
   // Import a file from OneDrive into post media
   const handleImportFromOneDrive = async (fileId) => {
+    if (!validateImportAllowed()) return;
     if (!fileId || oneDriveImportingFileId) return;
     setOneDriveImportingFileId(fileId);
     setError(null);
@@ -1162,6 +1189,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   };
 
   const handleImportSelectedFromOneDrive = async () => {
+    if (!validateImportAllowed()) return;
     if (oneDriveBatchImporting || oneDriveImportingFileId) return;
     const ids = Array.isArray(oneDriveSelectedFileIds) ? oneDriveSelectedFileIds : [];
     if (ids.length === 0) return;
@@ -1295,6 +1323,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
   // Import a Canva design into post media
   const handleImportFromCanva = async () => {
+    if (!validateImportAllowed()) return;
     const designId = parseCanvaDesignId(canvaDesignId);
     if (!designId || canvaImporting) return;
     setCanvaImporting(true);
@@ -1441,6 +1470,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   };
 
   const handleImportFromLibrary = (selectedImages) => {
+    if (!validateImportAllowed()) return;
     setPostData(prev => ({
       ...prev,
       images: [...prev.images, ...selectedImages]
@@ -1926,8 +1956,46 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     // Define cleanedSelectedAccounts BEFORE the try block
     const cleanedSelectedAccounts = {};
     const selectedAccountsWithNames = {}; // ✅ Added
+    // Keep CreatePost open if we opened the "Published links" modal
+    let openedPublishedLinksModal = false;
 
     try {
+      const extractPublishedLinks = (publishResults) => {
+        const results = publishResults?.results;
+        if (!Array.isArray(results)) return [];
+        return results
+          .filter((r) => r?.success === true && r?.url)
+          .map((r) => ({
+            platform: r.platform,
+            url: r.url,
+          }));
+      };
+
+      const buildPlatformLinksNode = (links) => {
+        if (!Array.isArray(links) || links.length === 0) return null;
+        return (
+          <div style={{ marginTop: 4 }}>
+            {links.map((link, idx) => {
+              const label = String(link.platform || 'post')
+                .charAt(0)
+                .toUpperCase() + String(link.platform || 'post').slice(1);
+              return (
+                <div key={`${link.platform || 'platform'}-${idx}`}>
+                  <a
+                    href={link.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ color: '#2563EB', textDecoration: 'underline' }}
+                  >
+                    View on {label}
+                  </a>
+                </div>
+              );
+            })}
+          </div>
+        );
+      };
+
       // 🔹 Extract connected accounts from user profile
       const accountsMap = {};
       userProfile?.connectedAccounts?.forEach(account => {
@@ -2282,8 +2350,26 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
           if (publishResults) {
             const { successfulPublishes = successfulCount, totalAccounts = totalCount, results = [] } = publishResults;
+
+            const extractedLinks = extractPublishedLinks({ results });
+            if (extractedLinks.length > 0) {
+              setPublishedLinks(extractedLinks);
+              setShowPublishedLinksModal(true);
+              openedPublishedLinksModal = true;
+            }
+
+            const linksNode = buildPlatformLinksNode(extractedLinks);
+
             if (successfulPublishes === totalAccounts && totalAccounts > 0) {
-              showToast('Post published successfully to all platforms!', 'success');
+              showToast(
+                (
+                  <div>
+                    <div>Post published successfully to all platforms!</div>
+                    {linksNode}
+                  </div>
+                ),
+                'success'
+              );
             } else if (successfulPublishes > 0) {
               const successful = (results || [])
                 .filter((r) => r.success)
@@ -2294,7 +2380,14 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                 .map((r) => r.platform?.toUpperCase() || 'Unknown')
                 .join(', ');
               showToast(
-                `Published to ${successfulPublishes}/${totalAccounts} platforms. Success: ${successful}${failed ? `. Failed: ${failed}` : ''}`,
+                (
+                  <div>
+                    <div>
+                      {`Published to ${successfulPublishes}/${totalAccounts} platforms. Success: ${successful}${failed ? `. Failed: ${failed}` : ''}`}
+                    </div>
+                    {linksNode}
+                  </div>
+                ),
                 'warning'
               );
             } else {
@@ -2332,8 +2425,26 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
             const publishResults = publishResponse.data?.publishResults;
             if (publishResults) {
               const { successfulPublishes = 0, totalAccounts = 0, results = [] } = publishResults;
+
+              const extractedLinks = extractPublishedLinks(publishResults);
+              if (extractedLinks.length > 0) {
+                setPublishedLinks(extractedLinks);
+                setShowPublishedLinksModal(true);
+                openedPublishedLinksModal = true;
+              }
+
+              const linksNode = buildPlatformLinksNode(extractedLinks);
+
               if (successfulPublishes === totalAccounts) {
-                showToast('Post published successfully to all platforms!', 'success');
+                showToast(
+                  (
+                    <div>
+                      <div>Post published successfully to all platforms!</div>
+                      {linksNode}
+                    </div>
+                  ),
+                  'success'
+                );
               } else if (successfulPublishes > 0) {
                 const successful = (results || [])
                   .filter((r) => r.success)
@@ -2344,7 +2455,14 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                   .map((r) => r.platform?.toUpperCase() || 'Unknown')
                   .join(', ');
                 showToast(
-                  `Published to ${successfulPublishes}/${totalAccounts} platforms. Success: ${successful}${failed ? `. Failed: ${failed}` : ''}`,
+                  (
+                    <div>
+                      <div>
+                        {`Published to ${successfulPublishes}/${totalAccounts} platforms. Success: ${successful}${failed ? `. Failed: ${failed}` : ''}`}
+                      </div>
+                      {linksNode}
+                    </div>
+                  ),
                   'warning'
                 );
               } else {
@@ -2367,10 +2485,12 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
         userProfile?.connectedAccounts?.map(acc => ({ id: acc._id, username: acc.username })));
 
       // ✅ Let success/warning toast be visible, then reset and close modal
-      setTimeout(() => {
-        resetForm();
-        onClose();
-      }, 2500);
+      if (!openedPublishedLinksModal) {
+        setTimeout(() => {
+          resetForm();
+          onClose();
+        }, 2500);
+      }
 
     } catch (error) {
       console.error('❌ Failed to create/publish post:', error);
@@ -2868,6 +2988,109 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                 disabled={!reelCoverImage}
               >
                 Confirm Cover
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ Published links modal (direct URLs for link sharing / verification) */}
+      {showPublishedLinksModal && (
+        <div className="media-source-overlay" onClick={() => setShowPublishedLinksModal(false)}>
+          <div className="media-source-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '640px' }}>
+            <div className="media-source-header">
+              <h3>Published Links</h3>
+              <button
+                className="media-source-close"
+                onClick={() => setShowPublishedLinksModal(false)}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="media-source-body" style={{ padding: '16px', minHeight: '120px' }}>
+              {publishedLinks.length === 0 ? (
+                <p style={{ margin: 0, color: '#374151' }}>No direct links available for this publish.</p>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      onClick={async () => {
+                        const text = publishedLinks.map((l) => l.url).join('\n');
+                        try {
+                          await navigator.clipboard.writeText(text);
+                          showToast('All links copied to clipboard', 'success');
+                        } catch (err) {
+                          showToast('Failed to copy links', 'error');
+                        }
+                      }}
+                    >
+                      Copy all
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {publishedLinks.map((link, idx) => (
+                      <div
+                        key={`${link.platform || 'platform'}-${idx}`}
+                        style={{
+                          display: 'flex',
+                          gap: 10,
+                          alignItems: 'center',
+                          padding: '10px 12px',
+                          border: '1px solid #E5E7EB',
+                          borderRadius: 8,
+                          background: '#FFFFFF',
+                        }}
+                      >
+                        <div style={{ minWidth: 120, fontSize: 13, color: '#374151', fontWeight: 600 }}>
+                          {String(link.platform || 'platform').toUpperCase()}
+                        </div>
+
+                        <a
+                          href={link.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{ color: '#2563EB', fontSize: 13, wordBreak: 'break-all', flex: 1 }}
+                        >
+                          {link.url}
+                        </a>
+
+                        <button
+                          type="button"
+                          className="btn-secondary"
+                          onClick={async () => {
+                            try {
+                              await navigator.clipboard.writeText(link.url);
+                              showToast('Link copied', 'success');
+                            } catch (err) {
+                              showToast('Failed to copy link', 'error');
+                            }
+                          }}
+                        >
+                          Copy
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="modal-footer" style={{ borderTop: '1px solid #E5E7EB', padding: 12 }}>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => {
+                  setShowPublishedLinksModal(false);
+                  resetForm();
+                  onClose();
+                }}
+              >
+                Done
               </button>
             </div>
           </div>

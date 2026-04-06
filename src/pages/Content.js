@@ -34,7 +34,8 @@ import {
   AlertTriangle,
   Maximize2,
   ExpandIcon,
-  InfoIcon
+  InfoIcon,
+  ExternalLink
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -47,6 +48,88 @@ import { SUCCESS_MESSAGES, ERROR_MESSAGES } from '../utils/constants';
 import apiClient from '../utils/api';
 import './Content.css';
 import Loader from '../components/common/Loader';
+
+/** Post-created toast: per-row check (success) or X (fail); link when URL exists */
+const buildPostCreatedNotificationMessage = (response) => {
+  const platformLabel = (platform) => {
+    const p = String(platform || 'post').toLowerCase();
+    if (p === 'instagram_story') return 'Instagram';
+    if (p === 'facebook_story') return 'Facebook';
+    const raw = String(platform || 'post');
+    return raw.charAt(0).toUpperCase() + raw.slice(1);
+  };
+  const platformIcon = (platform) => {
+    const p = String(platform || '').toLowerCase();
+    if (p === 'instagram' || p === 'instagram_story')
+      return <Instagram size={22} className="post-created-toast-platform-icon post-created-toast-ig" />;
+    if (p === 'facebook' || p === 'facebook_story')
+      return <Facebook size={22} className="post-created-toast-platform-icon post-created-toast-fb" />;
+    if (p === 'twitter') return <Twitter size={22} className="post-created-toast-platform-icon" />;
+    if (p === 'linkedin') return <Linkedin size={22} className="post-created-toast-platform-icon post-created-toast-li" />;
+    if (p === 'youtube') return <Youtube size={22} className="post-created-toast-platform-icon post-created-toast-yt" />;
+    return <Share size={22} className="post-created-toast-platform-icon" />;
+  };
+  try {
+    const publishResults = response?.data?.publishResults;
+    const results = publishResults?.results;
+    if (!Array.isArray(results) || results.length === 0) {
+      return SUCCESS_MESSAGES.POST_CREATED;
+    }
+    return (
+      <div className="post-created-toast-inner">
+        <div className="post-created-toast-title">{SUCCESS_MESSAGES.POST_CREATED}</div>
+        <div className="post-created-toast-rows">
+          {results.map((r, idx) => {
+            const label = platformLabel(r.platform);
+            const ok = r?.success === true;
+            const url = (r?.url || '').trim();
+            const rowKey = `${r?.platform || 'platform'}-${r?.accountId ?? idx}-${idx}`;
+            if (ok && url) {
+              return (
+                <div key={rowKey} className="post-created-toast-row">
+                  <CheckCircle size={20} className="post-created-toast-status-icon post-created-toast-status-ok" aria-hidden />
+                  {platformIcon(r.platform)}
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="post-created-toast-row-link"
+                  >
+                    <span>View on {label}</span>
+                    <ExternalLink size={16} className="post-created-toast-row-external" aria-hidden />
+                  </a>
+                </div>
+              );
+            }
+            if (ok && !url) {
+              return (
+                <div key={rowKey} className="post-created-toast-row">
+                  <CheckCircle size={20} className="post-created-toast-status-icon post-created-toast-status-ok" aria-hidden />
+                  {platformIcon(r.platform)}
+                  <span className="post-created-toast-row-nolink">Published to {label}</span>
+                </div>
+              );
+            }
+            const errMsg = typeof r?.error === 'string' ? r.error : '';
+            const shortErr = errMsg.length > 90 ? `${errMsg.slice(0, 87)}…` : errMsg;
+            return (
+              <div key={rowKey} className="post-created-toast-row post-created-toast-row-failed">
+                <XCircle size={20} className="post-created-toast-status-icon post-created-toast-status-fail" aria-hidden />
+                {platformIcon(r.platform)}
+                <div className="post-created-toast-fail-text">
+                  <span className="post-created-toast-fail-title">{label} failed</span>
+                  {shortErr ? <span className="post-created-toast-fail-detail">{shortErr}</span> : null}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  } catch {
+    return SUCCESS_MESSAGES.POST_CREATED;
+  }
+};
 
 // Create Post Button component that uses Dashboard's approach
 const CreatePostButton = ({ onPostCreated, refreshPosts }) => {
@@ -72,7 +155,7 @@ const CreatePostButton = ({ onPostCreated, refreshPosts }) => {
     try {
       console.log('Creating post with data:', postData);
       const response = await apiCreatePost(postData);
-      setNotification({ type: 'success', message: SUCCESS_MESSAGES.POST_CREATED });
+      setNotification({ type: 'success', message: buildPostCreatedNotificationMessage(response) });
       setShowCreatePost(false);
 
       if (refreshPosts) {
@@ -127,7 +210,7 @@ const CreatePostButton = ({ onPostCreated, refreshPosts }) => {
 
       {notification && (
         <div className={`notification ${notification.type}`}>
-          <span>{notification.message}</span>
+          <div className="notification-message">{notification.message}</div>
           <button onClick={() => setNotification(null)}>×</button>
         </div>
       )}
@@ -219,7 +302,7 @@ const Content = () => {
   const handleCreatePost = async (postData) => {
     try {
       const response = await apiCreatePost(postData);
-      setNotification({ type: 'success', message: SUCCESS_MESSAGES.POST_CREATED });
+      setNotification({ type: 'success', message: buildPostCreatedNotificationMessage(response) });
       setShowCreatePost(false);
 
       await fetchAllPosts();
@@ -623,7 +706,7 @@ const Content = () => {
       {/* Notification */}
       {notification && (
         <div className={`notification ${notification.type}`}>
-          <span>{notification.message}</span>
+          <div className="notification-message">{notification.message}</div>
           <button onClick={() => setNotification(null)}>×</button>
         </div>
       )}
