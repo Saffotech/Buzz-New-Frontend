@@ -45,6 +45,8 @@ import { faXTwitter } from '@fortawesome/free-brands-svg-icons';
 
 /** Post-created toast: per-row check (success) or X (fail); link when URL exists */
 const buildPostCreatedNotificationMessage = (response) => {
+  const isScheduled = response?.data?.status === 'scheduled' || Boolean(response?.data?.scheduledDate);
+  const successMessage = isScheduled ? SUCCESS_MESSAGES.POST_SCHEDULED : SUCCESS_MESSAGES.POST_CREATED;
   const platformLabel = (platform) => {
     const p = String(platform || 'post').toLowerCase();
     if (p === 'instagram_story') return 'Instagram';
@@ -67,11 +69,11 @@ const buildPostCreatedNotificationMessage = (response) => {
     const publishResults = response?.data?.publishResults;
     const results = publishResults?.results;
     if (!Array.isArray(results) || results.length === 0) {
-      return SUCCESS_MESSAGES.POST_CREATED;
+      return successMessage;
     }
     return (
       <div className="post-created-toast-inner">
-        <div className="post-created-toast-title">{SUCCESS_MESSAGES.POST_CREATED}</div>
+        <div className="post-created-toast-title">{successMessage}</div>
         <div className="post-created-toast-rows">
           {results.map((r, idx) => {
             const label = platformLabel(r.platform);

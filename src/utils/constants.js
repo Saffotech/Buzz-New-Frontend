@@ -155,6 +155,7 @@ export const ERROR_MESSAGES = {
 // Success Messages
 export const SUCCESS_MESSAGES = {
   POST_CREATED: 'Post created successfully!',
+  POST_SCHEDULED: 'Post scheduled successfully!',
   POST_UPDATED: 'Post updated successfully!',
   POST_DELETED: 'Post deleted successfully!',
   POST_PUBLISHED: 'Post published successfully!',

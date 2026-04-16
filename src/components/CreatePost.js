@@ -99,6 +99,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   const [customTimeHours, setCustomTimeHours] = useState(9);
   const [customTimeMinutes, setCustomTimeMinutes] = useState(0);
   const [customTimeSeconds, setCustomTimeSeconds] = useState(0);
+  const [customTimePeriod, setCustomTimePeriod] = useState('AM');
   const [previewMode, setPreviewMode] = useState(false);
   const [showAISuggestions, setShowAISuggestions] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
@@ -554,6 +555,20 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     return `${hour24.toString().padStart(2, '0')}:${minute}`;
   };
 
+  const buildCustomScheduledTime = (
+    hour12 = customTimeHours,
+    minute = customTimeMinutes,
+    second = customTimeSeconds,
+    period = customTimePeriod
+  ) => {
+    const hhmm = convertTo24Hour(
+      String(hour12),
+      String(minute).padStart(2, '0'),
+      period
+    );
+    return `${hhmm}:${String(second).padStart(2, '0')}`;
+  };
+
   const getFiveMinutesAhead = () => {
     const now = new Date();
     now.setMinutes(now.getMinutes() + 5);
@@ -568,11 +583,11 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   useEffect(() => {
     if (isScheduled && !postData.scheduledTime) {
       const time = preferredTime === 'custom'
-        ? `${String(customTimeHours).padStart(2, '0')}:${String(customTimeMinutes).padStart(2, '0')}:${String(customTimeSeconds).padStart(2, '0')}`
+        ? buildCustomScheduledTime()
         : (preferredTime || initialFiveMinAhead);
       setPostData(prev => ({ ...prev, scheduledTime: time }));
     }
-  }, [isScheduled, postData.scheduledTime, initialFiveMinAhead, scheduleType, preferredTime, customTimeHours, customTimeMinutes, customTimeSeconds]);
+  }, [isScheduled, postData.scheduledTime, initialFiveMinAhead, scheduleType, preferredTime, customTimeHours, customTimeMinutes, customTimeSeconds, customTimePeriod]);
 
 
   // Memoized conversion — ✅ re-runs when scheduledTime changes
@@ -1511,6 +1526,14 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
           });
         }
 
+        // Upload-Post Instagram (no Meta-connected IG): allow treating Instagram as selectable
+        if (
+          userData.features?.instagramViaUploadPostNoAccount &&
+          !connectedPlatforms.includes('instagram')
+        ) {
+          connectedPlatforms.push('instagram');
+        }
+
         // Update the userData with the enhanced connectedPlatforms
         userData.connectedPlatforms = connectedPlatforms;
         console.log('Enhanced user data:', userData);
@@ -1543,8 +1566,12 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       // Then check if the platform is in the connectedPlatforms array
       const isInConnectedPlatforms = userProfile?.connectedPlatforms?.includes(platform.id);
 
-      // A platform is connected if either condition is true
-      const isConnected = hasAccountsForPlatform || isInConnectedPlatforms;
+      const uploadPostInstagram = userProfile?.features?.instagramViaUploadPostNoAccount;
+      // A platform is connected if either condition is true (or Upload-Post Instagram fallback)
+      const isConnected =
+        hasAccountsForPlatform ||
+        isInConnectedPlatforms ||
+        (platform.id === 'instagram' && uploadPostInstagram);
       return {
         ...platform,
         connected: isConnected,
@@ -1555,6 +1582,15 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
   const platforms = userProfile ? getAvailablePlatforms() : [];
 
+  /** Server: USE_UPLOAD_POST_FOR_INSTAGRAM + key + UPLOAD_POST_DEFAULT_USER, and no Buzz IG rows */
+  const isInstagramAccountlessUploadPostMode = () =>
+    Boolean(
+      userProfile?.features?.instagramViaUploadPostNoAccount &&
+        !(userProfile?.connectedAccounts || []).some(
+          (a) => a.platform === 'instagram' && a.connected !== false
+        )
+    );
+
   // Images are now required for all platforms
   const areImagesRequired = () => {
     return postData.platforms.includes('instagram', 'youtube', 'linkedin');
@@ -1562,10 +1598,28 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
   // Check if user has selected at least one social media account
   const hasAnySelectedAccount = () => {
-    const selected = postData.selectedAccounts || {};
-    return Object.values(selected).some((accounts) =>
+    const selectedPlatforms = postData.platforms || [];
+    const selAcc = postData.selectedAccounts || {};
+
+    const hasRealSelection = Object.values(selAcc).some((accounts) =>
       (accounts || []).some((acc) => acc != null && acc !== '')
     );
+    if (hasRealSelection) return true;
+
+    if (!isInstagramAccountlessUploadPostMode() || !selectedPlatforms.includes('instagram')) {
+      return false;
+    }
+
+    if (selectedPlatforms.length === 1) return true;
+
+    const needAcc = ['facebook', 'linkedin', 'youtube'];
+    for (const p of selectedPlatforms) {
+      if (p === 'instagram') continue;
+      if (!needAcc.includes(p)) continue;
+      const ids = (selAcc[p] || []).filter((x) => x != null && x !== '');
+      if (ids.length === 0) return false;
+    }
+    return true;
   };
 
   // Toast notification function
@@ -1625,6 +1679,12 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     // Check if accounts are selected for platforms that require it
     const platformsRequiringAccounts = ['instagram', 'facebook', 'linkedin', 'youtube'];
     for (const platform of postData.platforms) {
+      if (
+        platform === 'instagram' &&
+        isInstagramAccountlessUploadPostMode()
+      ) {
+        continue;
+      }
       if (platformsRequiringAccounts.includes(platform)) {
         const selectedAccountsForPlatform = postData.selectedAccounts[platform] || [];
         const validAccounts = selectedAccountsForPlatform.filter(account => account != null && account !== '');
@@ -1698,6 +1758,9 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     // Instagram and Facebook always require at least one valid account
     const platformsRequiringAccounts = ['instagram', 'facebook'];
     for (const platform of postData.platforms) {
+      if (platform === 'instagram' && isInstagramAccountlessUploadPostMode()) {
+        continue;
+      }
       if (platformsRequiringAccounts.includes(platform)) {
         const selectedAccountsForPlatform = postData.selectedAccounts[platform] || [];
         const validAccounts = selectedAccountsForPlatform.filter(
@@ -1771,7 +1834,10 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
   const handlePlatformToggle = (platformId) => {
     const platform = platforms.find(p => p.id === platformId);
-    if (!platform || !platform.connected) return;
+    if (!platform) return;
+    const allowInstagramUploadPost =
+      platformId === 'instagram' && isInstagramAccountlessUploadPostMode();
+    if (!platform.connected && !allowInstagramUploadPost) return;
 
     setPostData(prev => {
       const currentPlatforms = prev.platforms || [];
@@ -1796,7 +1862,11 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   // Handler to select all connected platforms
   const handleSelectAllPlatforms = () => {
     const connectedPlatformIds = platforms
-      .filter(p => p.connected)
+      .filter(
+        (p) =>
+          p.connected ||
+          (p.id === 'instagram' && isInstagramAccountlessUploadPostMode())
+      )
       .map(p => p.id);
 
     if (connectedPlatformIds.length === 0) return;
@@ -3994,10 +4064,11 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                             onMouseEnter={() => setHoveredPlatform(platform.id)}
                             onMouseLeave={() => setHoveredPlatform(null)}
                             className={`platform-btn
-                               ${!platform.connected ? 'not-connected-btn' : ''}
+                               ${!platform.connected && !(platform.id === 'instagram' && isInstagramAccountlessUploadPostMode()) ? 'not-connected-btn' : ''}
                                ${selectedAccountsCount > 0 ? 'selectedx' : ''}`}
                             onClick={(e) =>
-                              platform.connected
+                              platform.connected ||
+                              (platform.id === 'instagram' && isInstagramAccountlessUploadPostMode())
                                 ? handlePlatformToggle(platform.id)
                                 : handleConnectClick(e)
                             }
@@ -4014,7 +4085,11 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                             <span style={{ color: hoveredPlatform === platform.id || selectedAccountsCount > 0 ? platform.color : "#000" }} >{platform.name}</span>
                             <span className="connect-status">
                               {platform.connected ?
-                                (selectedAccountsCount > 0 ? `${selectedAccountsCount} account${selectedAccountsCount > 1 ? 's' : ''} selected` : 'Connected')
+                                (platform.id === 'instagram' && isInstagramAccountlessUploadPostMode()
+                                  ? (selectedAccountsCount > 0
+                                    ? `${selectedAccountsCount} account${selectedAccountsCount > 1 ? 's' : ''} selected`
+                                    : 'Upload-Post')
+                                  : (selectedAccountsCount > 0 ? `${selectedAccountsCount} account${selectedAccountsCount > 1 ? 's' : ''} selected` : 'Connected'))
                                 : 'Connect Now'
                               }
                             </span>
@@ -4100,6 +4175,16 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                                 </div>
                               )}
                             </div>
+                          )}
+
+                          {isSelected &&
+                            platform.id === 'instagram' &&
+                            platform.connected &&
+                            isInstagramAccountlessUploadPostMode() && (
+                            <p className="upload-post-instagram-hint">
+                              Posts go to Instagram through Upload-Post using your server default profile
+                              (UPLOAD_POST_DEFAULT_USER). Manage the Instagram login in the Upload-Post dashboard.
+                            </p>
                           )}
                         </div>
                       );
@@ -4572,7 +4657,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                           setPostData(prev => ({
                             ...prev,
                             scheduledDate: dateStr,
-                            scheduledTime: scheduleType === 'auto' && preferredTime === 'custom' ? `${String(customTimeHours).padStart(2, '0')}:${String(customTimeMinutes).padStart(2, '0')}:${String(customTimeSeconds).padStart(2, '0')}` : timeStr
+                            scheduledTime: scheduleType === 'auto' && preferredTime === 'custom' ? buildCustomScheduledTime() : timeStr
                           }));
                         }
                         if (!scheduleStartDate) setScheduleStartDate(dateStr);
@@ -4609,7 +4694,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                                   fiveMin.setMinutes(fiveMin.getMinutes() + 5);
                                   setPostData(prev => ({
                                     ...prev,
-                                    scheduledTime: preferredTime === 'custom' ? `${String(customTimeHours).padStart(2, '0')}:${String(customTimeMinutes).padStart(2, '0')}:${String(customTimeSeconds).padStart(2, '0')}` : (prev.scheduledTime || `${fiveMin.getHours().toString().padStart(2, '0')}:${fiveMin.getMinutes().toString().padStart(2, '0')}`)
+                                    scheduledTime: preferredTime === 'custom' ? buildCustomScheduledTime() : (prev.scheduledTime || `${fiveMin.getHours().toString().padStart(2, '0')}:${fiveMin.getMinutes().toString().padStart(2, '0')}`)
                                   }));
                                 }
                               }}
@@ -4632,7 +4717,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                               disabled
                               onChange={() => {
                                 setScheduleType('auto');
-                                setPostData(prev => ({ ...prev, scheduledTime: preferredTime === 'custom' ? `${String(customTimeHours).padStart(2, '0')}:${String(customTimeMinutes).padStart(2, '0')}:${String(customTimeSeconds).padStart(2, '0')}` : preferredTime }));
+                                setPostData(prev => ({ ...prev, scheduledTime: preferredTime === 'custom' ? buildCustomScheduledTime() : preferredTime }));
                               }}
                             />
                             <span className="schedule-type-radio"></span>
@@ -4692,7 +4777,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                             required={isScheduled}
                           />
                         </div>
-                        {!(scheduleType === 'auto' && (postingFrequency === 'daily' || postingFrequency === 'weekly')) && (
+                        {(scheduleType === 'auto' && !(postingFrequency === 'daily' || postingFrequency === 'weekly')) && (
                         <div className="schedule-date-group">
                           <label className="schedule-sub-label">End Date</label>
                           <input
@@ -4817,7 +4902,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                               const val = e.target.value;
                               setPreferredTime(val);
                               if (val === 'custom') {
-                                const customStr = `${String(customTimeHours).padStart(2, '0')}:${String(customTimeMinutes).padStart(2, '0')}:${String(customTimeSeconds).padStart(2, '0')}`;
+                                const customStr = buildCustomScheduledTime();
                                 setPostData(prev => ({ ...prev, scheduledTime: customStr }));
                               } else {
                                 setPostData(prev => ({ ...prev, scheduledTime: val }));
@@ -4843,12 +4928,29 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                                 onChange={(e) => {
                                   const h = parseInt(e.target.value, 10);
                                   setCustomTimeHours(h);
-                                  setPostData(prev => ({ ...prev, scheduledTime: `${String(h).padStart(2, '0')}:${String(customTimeMinutes).padStart(2, '0')}:${String(customTimeSeconds).padStart(2, '0')}` }));
+                                  setPostData(prev => ({ ...prev, scheduledTime: buildCustomScheduledTime(h, customTimeMinutes, customTimeSeconds, customTimePeriod) }));
                                 }}
                                 className="form-input preferred-time-select custom-time-select"
                               >
-                                {Array.from({ length: 24 }, (_, i) => (
-                                  <option key={i} value={i}>{String(i).padStart(2, '0')}</option>
+                                {Array.from({ length: 12 }, (_, i) => {
+                                  const h = i + 1;
+                                  return <option key={h} value={h}>{String(h).padStart(2, '0')}</option>;
+                                })}
+                              </select>
+                            </div>
+                            <div className="custom-time-group">
+                              <label className="schedule-sub-label">AM/PM</label>
+                              <select
+                                value={customTimePeriod}
+                                onChange={(e) => {
+                                  const p = e.target.value;
+                                  setCustomTimePeriod(p);
+                                  setPostData(prev => ({ ...prev, scheduledTime: buildCustomScheduledTime(customTimeHours, customTimeMinutes, customTimeSeconds, p) }));
+                                }}
+                                className="form-input preferred-time-select custom-time-select"
+                              >
+                                {['AM', 'PM'].map((p) => (
+                                  <option key={p} value={p}>{p}</option>
                                 ))}
                               </select>
                             </div>
@@ -4859,7 +4961,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                                 onChange={(e) => {
                                   const m = parseInt(e.target.value, 10);
                                   setCustomTimeMinutes(m);
-                                  setPostData(prev => ({ ...prev, scheduledTime: `${String(customTimeHours).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(customTimeSeconds).padStart(2, '0')}` }));
+                                  setPostData(prev => ({ ...prev, scheduledTime: buildCustomScheduledTime(customTimeHours, m, customTimeSeconds, customTimePeriod) }));
                                 }}
                                 className="form-input preferred-time-select custom-time-select"
                               >
@@ -4875,7 +4977,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                                 onChange={(e) => {
                                   const s = parseInt(e.target.value, 10);
                                   setCustomTimeSeconds(s);
-                                  setPostData(prev => ({ ...prev, scheduledTime: `${String(customTimeHours).padStart(2, '0')}:${String(customTimeMinutes).padStart(2, '0')}:${String(s).padStart(2, '0')}` }));
+                                  setPostData(prev => ({ ...prev, scheduledTime: buildCustomScheduledTime(customTimeHours, customTimeMinutes, s, customTimePeriod) }));
                                 }}
                                 className="form-input preferred-time-select custom-time-select"
                               >
